@@ -1,2 +1,2 @@
 # chronoutil
-ChronoUtil module provides powerful extensions to rust's Chrono crate.
+ChronoUtil provides powerful extensions to rust's Chrono crate.
