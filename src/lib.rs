@@ -1,5 +1,7 @@
 extern crate chrono;
 
+mod relative_duration;
+
 mod leap_year {
     use chrono::Datelike;
 
@@ -38,7 +40,7 @@ mod delta {
     use chrono::Datelike;
     use super::leap_year::is_leap_year;
 
-    fn shift<T: Datelike>(date: T, y: i32, m: i32) -> T {
+    pub fn shift<T: Datelike>(date: T, y: i32, m: i32) -> T {
         let mut year = date.year() + y + m / 12;
         let mut month = date.month() as i32 + m % 12;
         let mut day = date.day();
@@ -65,11 +67,11 @@ mod delta {
             .with_day(day).unwrap()
     }
 
-    fn shift_years<T: Datelike>(date: T, x: i32) -> T {
+    pub fn shift_years<T: Datelike>(date: T, x: i32) -> T {
         shift(date, x, 0)
     }
 
-    fn shift_months<T: Datelike>(date: T, x: i32) -> T {
+    pub fn shift_months<T: Datelike>(date: T, x: i32) -> T {
         shift(date, 0, x)
     }
 
@@ -126,6 +128,14 @@ mod delta {
             assert_eq!(shift_years(base, -4), NaiveDate::from_ymd(2016, 2, 29));
             assert_eq!(shift_years(base, -20), NaiveDate::from_ymd(2000, 2, 29));
             assert_eq!(shift_years(base, -120), NaiveDate::from_ymd(1900, 2, 28));
+        }
+
+        #[test]
+        fn test_shift() {
+            let base = NaiveDate::from_ymd(2020, 2, 29);
+
+            assert_eq!(shift(base, 1, 12), NaiveDate::from_ymd(2022, 2, 28));
+            assert_eq!(shift(base, 3, 12), NaiveDate::from_ymd(2024, 2, 29));
         }
     }
 }
