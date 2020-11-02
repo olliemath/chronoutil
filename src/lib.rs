@@ -13,20 +13,18 @@ mod leap_year {
         is_leap_year(date.year())
     }
 
-
     #[cfg(test)]
     mod tests {
-        use std::collections::HashSet;
         use super::*;
+        use std::collections::HashSet;
 
         #[test]
         fn test_leap_year_cases() {
-
-            let _leap_years: Vec<i32> = vec!{
-                1904, 1908, 1912, 1916, 1920, 1924, 1928, 1932, 1936, 1940, 1944,
-                1948, 1952, 1956, 1960, 1964, 1968, 1972, 1976, 1980, 1984, 1988,
-                1992, 1996, 2000, 2004, 2008, 2012, 2016, 2020
-            };
+            let _leap_years: Vec<i32> = vec![
+                1904, 1908, 1912, 1916, 1920, 1924, 1928, 1932, 1936, 1940, 1944, 1948, 1952, 1956,
+                1960, 1964, 1968, 1972, 1976, 1980, 1984, 1988, 1992, 1996, 2000, 2004, 2008, 2012,
+                2016, 2020,
+            ];
             let leap_years_1900_to_2020: HashSet<i32> = _leap_years.into_iter().collect();
 
             for year in 1900..2021 {
@@ -37,8 +35,8 @@ mod leap_year {
 }
 
 mod delta {
-    use chrono::Datelike;
     use super::leap_year::is_leap_year;
+    use chrono::Datelike;
 
     pub fn shift<T: Datelike>(date: T, y: i32, m: i32) -> T {
         let mut year = date.year() + y + m / 12;
@@ -61,10 +59,14 @@ mod delta {
         };
 
         // This is slow but guaranteed to succeed (short of interger overflow)
-        date.with_day(1).unwrap()
-            .with_year(year).unwrap()
-            .with_month(month as u32).unwrap()
-            .with_day(day).unwrap()
+        date.with_day(1)
+            .unwrap()
+            .with_year(year)
+            .unwrap()
+            .with_month(month as u32)
+            .unwrap()
+            .with_day(day)
+            .unwrap()
     }
 
     pub fn shift_years<T: Datelike>(date: T, x: i32) -> T {
@@ -77,8 +79,8 @@ mod delta {
 
     #[cfg(test)]
     mod tests {
-        use chrono::naive::NaiveDate;
         use super::*;
+        use chrono::naive::NaiveDate;
 
         #[test]
         fn test_shift_months() {
