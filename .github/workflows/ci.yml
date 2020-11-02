@@ -6,7 +6,7 @@
 
 on: [push, pull_request]
 
-name: Quickstart
+name: test
 
 jobs:
   check:
@@ -50,7 +50,7 @@ jobs:
           command: test
 
   lint:
-    name: Linting
+    name: Lint
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
