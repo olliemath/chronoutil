@@ -1,17 +1,58 @@
 use core::ops::{Add, Div, Mul, Neg, Sub};
+use std::time::Duration as StdDuration;
 
 use chrono::{Date, DateTime, Duration, NaiveDate, NaiveDateTime, TimeZone};
 
-use super::delta::shift;
+use super::delta::shift_months;
 
-/// Relative time duration with nanosecond precision.
-/// This also allows for the negative duration; see individual methods for details.
+/// Relative time duration extending Chrono's Duration.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct RelativeDuration {
-    years: i32, // Sorry, cosmologists..
-    months: i32,
+    months: i32,  // Sorry, cosmologists..
     duration: Duration,
 }
+
+impl From<Duration> for RelativeDuration {
+    #[inline]
+    fn from(item: Duration) -> Self {
+        RelativeDuration {months:0, duration: item }
+    }
+}
+
+impl From<StdDuration> for RelativeDuration {
+    #[inline]
+    fn from(item: StdDuration) -> Self {
+        RelativeDuration::from(Duration::from_std(item).expect("RelativeDuration::from_std OutOfRangeError"))
+    }
+}
+
+
+impl RelativeDuration {
+
+    /// Makes a new `RelativeDuration` with given number of years.
+    /// Equivalent to `RealtiveDuration::months(years * 12)` with overflow checks.
+    /// Panics when the duration is out of bounds.
+    #[inline]
+    pub fn years(years: i32) -> RelativeDuration {
+        let months = years.checked_mul(12).expect("RelativeDuration::years out of bounds");
+        RelativeDuration::months(months)
+    }
+
+
+    /// Makes a new `RelativeDuration` with given number of months.
+    /// Panics when the duration is out of bounds.
+    #[inline]
+    pub fn months(months: i32) -> RelativeDuration {
+        RelativeDuration{months: months, duration: Duration::zero()}
+    }
+
+    /// Update the `Duration` part of the current `RelativeDuration`.
+    #[inline]
+    pub fn with_duration(self, duration: Duration) -> RelativeDuration {
+        RelativeDuration{months: self.months, duration: duration}
+    }
+}
+
 
 impl Neg for RelativeDuration {
     type Output = RelativeDuration;
@@ -19,7 +60,6 @@ impl Neg for RelativeDuration {
     #[inline]
     fn neg(self) -> RelativeDuration {
         RelativeDuration {
-            years: -self.years,
             months: -self.months,
             duration: -self.duration,
         }
@@ -32,7 +72,6 @@ impl Add<RelativeDuration> for RelativeDuration {
     #[inline]
     fn add(self, rhs: RelativeDuration) -> RelativeDuration {
         RelativeDuration {
-            years: self.years + rhs.years,
             months: self.months + rhs.months,
             duration: self.duration + rhs.duration,
         }
@@ -45,7 +84,6 @@ impl Add<Duration> for RelativeDuration {
     #[inline]
     fn add(self, rhs: Duration) -> RelativeDuration {
         self + RelativeDuration {
-            years: 0,
             months: 0,
             duration: rhs,
         }
@@ -94,7 +132,6 @@ impl Mul<i32> for RelativeDuration {
     #[inline]
     fn mul(self, rhs: i32) -> RelativeDuration {
         RelativeDuration {
-            years: self.years * rhs,
             months: self.months * rhs,
             duration: self.duration * rhs,
         }
@@ -107,7 +144,6 @@ impl Div<i32> for RelativeDuration {
     #[inline]
     fn div(self, rhs: i32) -> RelativeDuration {
         RelativeDuration {
-            years: self.years / rhs,
             months: self.months / rhs,
             duration: self.duration / rhs,
         }
@@ -121,7 +157,7 @@ impl Add<RelativeDuration> for NaiveDate {
 
     #[inline]
     fn add(self, rhs: RelativeDuration) -> NaiveDate {
-        shift(self, rhs.years, rhs.months) + rhs.duration
+        shift_months(self, rhs.months) + rhs.duration
     }
 }
 
@@ -130,7 +166,7 @@ impl Add<RelativeDuration> for NaiveDateTime {
 
     #[inline]
     fn add(self, rhs: RelativeDuration) -> NaiveDateTime {
-        shift(self, rhs.years, rhs.months) + rhs.duration
+        shift_months(self, rhs.months) + rhs.duration
     }
 }
 
@@ -142,7 +178,7 @@ where
 
     #[inline]
     fn add(self, rhs: RelativeDuration) -> Date<Tz> {
-        shift(self, rhs.years, rhs.months) + rhs.duration
+        shift_months(self, rhs.months) + rhs.duration
     }
 }
 
@@ -154,7 +190,7 @@ where
 
     #[inline]
     fn add(self, rhs: RelativeDuration) -> DateTime<Tz> {
-        shift(self, rhs.years, rhs.months) + rhs.duration
+        shift_months(self, rhs.months) + rhs.duration
     }
 }
 
@@ -165,13 +201,11 @@ mod tests {
     #[test]
     fn test_duration_arithmetic() {
         let x = RelativeDuration {
-            years: 5,
-            months: 7,
+            months: 5 * 12 + 7,
             duration: Duration::seconds(100),
         };
         let y = RelativeDuration {
-            years: 3,
-            months: 6,
+            months: 3 * 12 + 6,
             duration: Duration::seconds(300),
         };
         let z = Duration::days(100);
@@ -179,24 +213,21 @@ mod tests {
         assert_eq!(
             x + y,
             RelativeDuration {
-                years: 8,
-                months: 13,
+                months: 9 * 12 + 1,
                 duration: Duration::seconds(400)
             }
         );
         assert_eq!(
             x - y,
             RelativeDuration {
-                years: 2,
-                months: 1,
+                months: 2 * 12 + 1,
                 duration: Duration::seconds(-200)
             }
         );
         assert_eq!(
             x + z,
             RelativeDuration {
-                years: 5,
-                months: 7,
+                months: 5 * 12 + 7,
                 duration: Duration::days(100) + Duration::seconds(100)
             }
         );
@@ -209,16 +240,14 @@ mod tests {
         assert_eq!(
             x / 2,
             RelativeDuration {
-                years: 2,
-                months: 3,
+                months: 5 * 6 + 3,
                 duration: Duration::seconds(50)
             }
         );
         assert_eq!(
             x * 2,
             RelativeDuration {
-                years: 10,
-                months: 14,
+                months: 10 * 12 + 14,
                 duration: Duration::seconds(200)
             }
         );
@@ -230,16 +259,14 @@ mod tests {
 
         assert_eq!(
             base + RelativeDuration {
-                years: 1,
-                months: 12,
+                months: 24,
                 duration: Duration::zero()
             },
             NaiveDate::from_ymd(2022, 2, 28)
         );
         assert_eq!(
             base + RelativeDuration {
-                years: 3,
-                months: 12,
+                months: 48,
                 duration: Duration::zero()
             },
             NaiveDate::from_ymd(2024, 2, 29)
@@ -247,8 +274,7 @@ mod tests {
 
         let not_leap = NaiveDate::from_ymd(2020, 2, 28);
         let tricky_delta = RelativeDuration {
-            years: 1,
-            months: 12,
+            months: 24,
             duration: Duration::days(1),
         };
         assert_eq!(base + tricky_delta, NaiveDate::from_ymd(2022, 3, 1));
