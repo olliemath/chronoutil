@@ -1,6 +1,7 @@
 extern crate chrono;
 
 mod relative_duration;
+mod rrule;
 
 mod leap_year {
     use chrono::Datelike;
