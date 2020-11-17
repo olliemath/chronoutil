@@ -8,51 +8,110 @@ use super::delta::shift_months;
 /// Relative time duration extending Chrono's Duration.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct RelativeDuration {
-    months: i32,  // Sorry, cosmologists..
+    months: i32, // Sorry, cosmologists..
     duration: Duration,
 }
 
 impl From<Duration> for RelativeDuration {
     #[inline]
     fn from(item: Duration) -> Self {
-        RelativeDuration {months:0, duration: item }
+        RelativeDuration {
+            months: 0,
+            duration: item,
+        }
     }
 }
 
 impl From<StdDuration> for RelativeDuration {
     #[inline]
     fn from(item: StdDuration) -> Self {
-        RelativeDuration::from(Duration::from_std(item).expect("RelativeDuration::from_std OutOfRangeError"))
+        RelativeDuration::from(
+            Duration::from_std(item).expect("RelativeDuration::from_std OutOfRangeError"),
+        )
     }
 }
 
-
 impl RelativeDuration {
-
     /// Makes a new `RelativeDuration` with given number of years.
     /// Equivalent to `RealtiveDuration::months(years * 12)` with overflow checks.
     /// Panics when the duration is out of bounds.
     #[inline]
     pub fn years(years: i32) -> RelativeDuration {
-        let months = years.checked_mul(12).expect("RelativeDuration::years out of bounds");
+        let months = years
+            .checked_mul(12)
+            .expect("RelativeDuration::years out of bounds");
         RelativeDuration::months(months)
     }
-
 
     /// Makes a new `RelativeDuration` with given number of months.
     /// Panics when the duration is out of bounds.
     #[inline]
     pub fn months(months: i32) -> RelativeDuration {
-        RelativeDuration{months: months, duration: Duration::zero()}
+        RelativeDuration {
+            months: months,
+            duration: Duration::zero(),
+        }
+    }
+
+    /// Makes a new `RelativeDuration` with given number of weeks.
+    /// Panics when the duration is out of bounds.
+    #[inline]
+    pub fn weeks(weeks: i64) -> RelativeDuration {
+        RelativeDuration {
+            months: 0,
+            duration: Duration::weeks(weeks),
+        }
+    }
+
+    /// Makes a new `RelativeDuration` with given number of days.
+    /// Panics when the duration is out of bounds.
+    #[inline]
+    pub fn days(days: i64) -> RelativeDuration {
+        RelativeDuration {
+            months: 0,
+            duration: Duration::days(days),
+        }
+    }
+
+    /// Makes a new `RelativeDuration` with given number of hours.
+    /// Panics when the duration is out of bounds.
+    #[inline]
+    pub fn hours(hours: i64) -> RelativeDuration {
+        RelativeDuration {
+            months: 0,
+            duration: Duration::hours(hours),
+        }
+    }
+
+    /// Makes a new `RelativeDuration` with given number of minutes.
+    /// Panics when the duration is out of bounds.
+    #[inline]
+    pub fn minutes(minutes: i64) -> RelativeDuration {
+        RelativeDuration {
+            months: 0,
+            duration: Duration::minutes(minutes),
+        }
+    }
+
+    /// Makes a new `RelativeDuration` with given number of seconds.
+    /// Panics when the duration is out of bounds.
+    #[inline]
+    pub fn seconds(seconds: i64) -> RelativeDuration {
+        RelativeDuration {
+            months: 0,
+            duration: Duration::seconds(seconds),
+        }
     }
 
     /// Update the `Duration` part of the current `RelativeDuration`.
     #[inline]
     pub fn with_duration(self, duration: Duration) -> RelativeDuration {
-        RelativeDuration{months: self.months, duration: duration}
+        RelativeDuration {
+            months: self.months,
+            duration: duration,
+        }
     }
 }
-
 
 impl Neg for RelativeDuration {
     type Output = RelativeDuration;
@@ -279,5 +338,21 @@ mod tests {
         };
         assert_eq!(base + tricky_delta, NaiveDate::from_ymd(2022, 3, 1));
         assert_eq!(base + tricky_delta, not_leap + tricky_delta);
+    }
+
+    #[test]
+    fn test_constructors() {
+        assert_eq!(RelativeDuration::years(5), RelativeDuration::months(60));
+        assert_eq!(RelativeDuration::weeks(5), RelativeDuration::days(35));
+        assert_eq!(RelativeDuration::days(5), RelativeDuration::hours(120));
+        assert_eq!(RelativeDuration::hours(5), RelativeDuration::minutes(300));
+        assert_eq!(RelativeDuration::minutes(5), RelativeDuration::seconds(300));
+        assert_eq!(
+            RelativeDuration::months(1).with_duration(Duration::weeks(3)),
+            RelativeDuration {
+                months: 1,
+                duration: Duration::weeks(3)
+            },
+        );
     }
 }
