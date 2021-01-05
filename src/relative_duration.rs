@@ -1,3 +1,4 @@
+//! Implements a RelativeDuration extending Chrono's Duration to shift by months and years.
 use core::ops::{Add, Div, Mul, Neg, Sub};
 use std::time::Duration as StdDuration;
 
@@ -13,6 +14,7 @@ pub struct RelativeDuration {
 }
 
 impl From<Duration> for RelativeDuration {
+    /// Makes a new `RelativeDuration` from a `chrono::Duration`.
     #[inline]
     fn from(item: Duration) -> Self {
         RelativeDuration {
@@ -23,6 +25,7 @@ impl From<Duration> for RelativeDuration {
 }
 
 impl From<StdDuration> for RelativeDuration {
+    /// Makes a new `RelativeDuration` from a std `Duration`.
     #[inline]
     fn from(item: StdDuration) -> Self {
         RelativeDuration::from(

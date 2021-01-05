@@ -1,3 +1,4 @@
+//! Implements `DateRule` - an iterator yielding evenly spaced dates.
 use std::iter::Iterator;
 
 use super::relative_duration::RelativeDuration;
@@ -76,7 +77,7 @@ where
         Self::new(from, RelativeDuration::years(1))
     }
 
-    // Limit the DateRule to a given number of dates.
+    /// Limits the DateRule to a given number of dates.
     pub fn with_count(&self, number: usize) -> Self {
         Self {
             freq: self.freq,
@@ -87,7 +88,7 @@ where
         }
     }
 
-    // Limit the DateRule to a maximim date (exclusive).
+    /// Limits the DateRule to a maximim date (exclusive).
     pub fn with_end(&self, end: D) -> Self {
         Self {
             freq: self.freq,

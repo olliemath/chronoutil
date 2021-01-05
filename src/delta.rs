@@ -1,10 +1,12 @@
+//! Contains utility functions for shifting Date objects.
 use chrono::Datelike;
 
 fn is_leap_year(year: i32) -> bool {
     year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
 }
 
-// Shift a date by the given number of months
+/// Shift a date by the given number of months.
+/// Ambiguous month-ends are shifted backwards as necessary.
 pub fn shift_months<D: Datelike>(date: D, months: i32) -> D {
     let mut year = date.year() + months / 12;
     let mut month = date.month() as i32 + months % 12;
@@ -36,12 +38,14 @@ pub fn shift_months<D: Datelike>(date: D, months: i32) -> D {
         .unwrap()
 }
 
-// Shift a date by the given number of years
+/// Shift a date by the given number of years.
+/// Ambiguous month-ends are shifted backwards as necessary.
 pub fn shift_years<D: Datelike>(date: D, years: i32) -> D {
     shift_months(date, years * 12)
 }
 
-// Shift the date to have the given month
+/// Shift the date to have the given month. Returns None if the month is out of range.
+/// Ambiguous month-ends are shifted backwards as necessary.
 pub fn with_month<D: Datelike>(date: D, month: u32) -> Option<D> {
     if month == 0 || month > 12 {
         None
@@ -51,6 +55,8 @@ pub fn with_month<D: Datelike>(date: D, month: u32) -> Option<D> {
     }
 }
 
+/// Shift the date to have the given month.
+/// Ambiguous month-ends are shifted backwards as necessary.
 pub fn with_year<D: Datelike>(date: D, year: i32) -> D {
     let delta = year - date.year();
     shift_years(date, delta)
