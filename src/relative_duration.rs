@@ -48,7 +48,7 @@ impl RelativeDuration {
     #[inline]
     pub fn months(months: i32) -> RelativeDuration {
         RelativeDuration {
-            months: months,
+            months,
             duration: Duration::zero(),
         }
     }
@@ -108,7 +108,7 @@ impl RelativeDuration {
     pub fn with_duration(self, duration: Duration) -> RelativeDuration {
         RelativeDuration {
             months: self.months,
-            duration: duration,
+            duration,
         }
     }
 }

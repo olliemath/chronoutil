@@ -22,10 +22,10 @@ where
 {
     // Create a new RRule from an initial date and relative duration.
     #[inline]
-    fn new(start: D, freq: RelativeDuration) -> Self {
+    pub fn new(start: D, freq: RelativeDuration) -> Self {
         Self {
-            freq: freq,
-            start: start,
+            freq,
+            start,
             end: None,
             count: None,
             _current_count: 0,
@@ -34,48 +34,48 @@ where
 
     // Create an RRule yielding dates one second appart.
     #[inline]
-    fn secondly(from: D) -> Self {
+    pub fn secondly(from: D) -> Self {
         Self::new(from, RelativeDuration::seconds(1))
     }
 
     // Create an RRule yielding dates one minute appart.
     #[inline]
-    fn minutely(from: D) -> Self {
+    pub fn minutely(from: D) -> Self {
         Self::new(from, RelativeDuration::minutes(1))
     }
 
     // Create an RRule yielding dates one hour appart.
     #[inline]
-    fn hourly(from: D) -> Self {
+    pub fn hourly(from: D) -> Self {
         Self::new(from, RelativeDuration::hours(1))
     }
 
     // Create an RRule yielding dates one day appart.
     #[inline]
-    fn daily(from: D) -> Self {
+    pub fn daily(from: D) -> Self {
         Self::new(from, RelativeDuration::days(1))
     }
 
     // Create an RRule yielding dates one week appart.
     #[inline]
-    fn weekly(from: D) -> Self {
+    pub fn weekly(from: D) -> Self {
         Self::new(from, RelativeDuration::weeks(1))
     }
 
     // Create an RRule yielding dates one month appart.
     #[inline]
-    fn monthly(from: D) -> Self {
+    pub fn monthly(from: D) -> Self {
         Self::new(from, RelativeDuration::months(1))
     }
 
     // Create an RRule yielding dates one year appart.
     #[inline]
-    fn yearly(from: D) -> Self {
+    pub fn yearly(from: D) -> Self {
         Self::new(from, RelativeDuration::years(1))
     }
 
     // Limit the RRule to a given number of dates.
-    fn with_count(&self, number: usize) -> Self {
+    pub fn with_count(&self, number: usize) -> Self {
         Self {
             freq: self.freq,
             start: self.start,
@@ -86,7 +86,7 @@ where
     }
 
     // Limit the RRule to a maximim date (exclusive).
-    fn with_end(&self, end: D) -> Self {
+    pub fn with_end(&self, end: D) -> Self {
         Self {
             freq: self.freq,
             start: self.start,

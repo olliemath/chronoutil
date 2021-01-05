@@ -56,8 +56,6 @@ pub fn with_year<D: Datelike>(date: D, year: i32) -> D {
     shift_years(date, delta)
 }
 
-
-
 #[cfg(test)]
 mod tests {
     use std::collections::HashSet;
@@ -160,17 +158,50 @@ mod tests {
 
         assert_eq!(with_month(base, 0), None);
         assert_eq!(with_month(base, 1), Some(base));
-        assert_eq!(with_month(base, 2).unwrap(), NaiveDate::from_ymd(2020, 2, 29));
-        assert_eq!(with_month(base, 3).unwrap(), NaiveDate::from_ymd(2020, 3, 31));
-        assert_eq!(with_month(base, 4).unwrap(), NaiveDate::from_ymd(2020, 4, 30));
-        assert_eq!(with_month(base, 5).unwrap(), NaiveDate::from_ymd(2020, 5, 31));
-        assert_eq!(with_month(base, 6).unwrap(), NaiveDate::from_ymd(2020, 6, 30));
-        assert_eq!(with_month(base, 7).unwrap(), NaiveDate::from_ymd(2020, 7, 31));
-        assert_eq!(with_month(base, 8).unwrap(), NaiveDate::from_ymd(2020, 8, 31));
-        assert_eq!(with_month(base, 9).unwrap(), NaiveDate::from_ymd(2020, 9, 30));
-        assert_eq!(with_month(base, 10).unwrap(), NaiveDate::from_ymd(2020, 10, 31));
-        assert_eq!(with_month(base, 11).unwrap(), NaiveDate::from_ymd(2020, 11, 30));
-        assert_eq!(with_month(base, 12).unwrap(), NaiveDate::from_ymd(2020, 12, 31));
+        assert_eq!(
+            with_month(base, 2).unwrap(),
+            NaiveDate::from_ymd(2020, 2, 29)
+        );
+        assert_eq!(
+            with_month(base, 3).unwrap(),
+            NaiveDate::from_ymd(2020, 3, 31)
+        );
+        assert_eq!(
+            with_month(base, 4).unwrap(),
+            NaiveDate::from_ymd(2020, 4, 30)
+        );
+        assert_eq!(
+            with_month(base, 5).unwrap(),
+            NaiveDate::from_ymd(2020, 5, 31)
+        );
+        assert_eq!(
+            with_month(base, 6).unwrap(),
+            NaiveDate::from_ymd(2020, 6, 30)
+        );
+        assert_eq!(
+            with_month(base, 7).unwrap(),
+            NaiveDate::from_ymd(2020, 7, 31)
+        );
+        assert_eq!(
+            with_month(base, 8).unwrap(),
+            NaiveDate::from_ymd(2020, 8, 31)
+        );
+        assert_eq!(
+            with_month(base, 9).unwrap(),
+            NaiveDate::from_ymd(2020, 9, 30)
+        );
+        assert_eq!(
+            with_month(base, 10).unwrap(),
+            NaiveDate::from_ymd(2020, 10, 31)
+        );
+        assert_eq!(
+            with_month(base, 11).unwrap(),
+            NaiveDate::from_ymd(2020, 11, 30)
+        );
+        assert_eq!(
+            with_month(base, 12).unwrap(),
+            NaiveDate::from_ymd(2020, 12, 31)
+        );
         assert_eq!(with_month(base, 13), None);
 
         assert_eq!(
