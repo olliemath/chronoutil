@@ -1,7 +1,8 @@
 //! Contains utility functions for shifting Date objects.
 use chrono::Datelike;
 
-fn is_leap_year(year: i32) -> bool {
+/// Returns true if the year is a leap-year, as naively defined in the Gregorian calendar.
+pub fn is_leap_year(year: i32) -> bool {
     year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
 }
 
