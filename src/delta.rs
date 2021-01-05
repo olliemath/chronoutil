@@ -46,8 +46,8 @@ pub fn with_month<D: Datelike>(date: D, month: u32) -> Option<D> {
     if month == 0 || month > 12 {
         None
     } else {
-        let delta = month - date.month();
-        Some(shift_months(date, delta as i32))
+        let delta = month as i32 - date.month() as i32;
+        Some(shift_months(date, delta))
     }
 }
 
@@ -207,7 +207,13 @@ mod tests {
         assert_eq!(
             with_month(NaiveDate::from_ymd(2021, 1, 31), 2),
             Some(NaiveDate::from_ymd(2021, 2, 28))
-        )
+        );
+
+        // Backwards shifts work too
+        assert_eq!(
+            with_month(NaiveDate::from_ymd(2021, 2, 15), 1),
+            Some(NaiveDate::from_ymd(2021, 1, 15))
+        );
     }
 
     #[test]
