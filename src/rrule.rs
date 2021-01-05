@@ -10,8 +10,8 @@ use chrono::{Date, DateTime, Datelike, NaiveDate, NaiveDateTime, TimeZone};
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct RRule<D: Datelike> {
     freq: RelativeDuration,
-    from: D,
-    until: Option<D>,
+    start: D,
+    end: Option<D>,
     count: Option<usize>,
     _current_count: usize,
 }
@@ -22,11 +22,11 @@ where
 {
     // Create a new RRule from an initial date and relative duration.
     #[inline]
-    fn new(from: D, freq: RelativeDuration) -> Self {
+    fn new(start: D, freq: RelativeDuration) -> Self {
         Self {
             freq: freq,
-            from: from,
-            until: None,
+            start: start,
+            end: None,
             count: None,
             _current_count: 0,
         }
@@ -78,19 +78,19 @@ where
     fn with_count(&self, number: usize) -> Self {
         Self {
             freq: self.freq,
-            from: self.from,
-            until: None,
+            start: self.start,
+            end: None,
             count: Some(number),
             _current_count: 0,
         }
     }
 
     // Limit the RRule to a maximim date (exclusive).
-    fn with_finish(&self, finish: D) -> Self {
+    fn with_end(&self, end: D) -> Self {
         Self {
             freq: self.freq,
-            from: self.from,
-            until: Some(finish),
+            start: self.start,
+            end: Some(end),
             count: None,
             _current_count: 0,
         }
@@ -107,8 +107,11 @@ impl Iterator for RRule<NaiveDate> {
             return None;
         }
 
-        let current_date = self.from + self.freq * self._current_count as i32;
-        if self.until.is_some() && current_date >= self.until.unwrap() {
+        let current_date = self.start + self.freq * self._current_count as i32;
+        if self.end.is_some()
+            && ((self.end.unwrap() >= self.start && current_date >= self.end.unwrap())
+                || (self.end.unwrap() < self.start && current_date <= self.end.unwrap()))
+        {
             return None;
         }
 
@@ -125,8 +128,8 @@ impl Iterator for RRule<NaiveDateTime> {
             return None;
         }
 
-        let current_date = self.from + self.freq * self._current_count as i32;
-        if self.until.is_some() && current_date >= self.until.unwrap() {
+        let current_date = self.start + self.freq * self._current_count as i32;
+        if self.end.is_some() && current_date >= self.end.unwrap() {
             return None;
         }
 
@@ -146,8 +149,8 @@ where
             return None;
         }
 
-        let current_date = self.from.clone() + self.freq * self._current_count as i32;
-        if self.until.is_some() && Some(current_date.clone()) >= self.until {
+        let current_date = self.start.clone() + self.freq * self._current_count as i32;
+        if self.end.is_some() && Some(current_date.clone()) >= self.end {
             return None;
         }
 
@@ -167,8 +170,8 @@ where
             return None;
         }
 
-        let current_date = self.from.clone() + self.freq * self._current_count as i32;
-        if self.until.is_some() && Some(current_date.clone()) >= self.until {
+        let current_date = self.start.clone() + self.freq * self._current_count as i32;
+        if self.end.is_some() && Some(current_date.clone()) >= self.end {
             return None;
         }
 
@@ -181,7 +184,7 @@ where
 mod tests {
     use super::*;
 
-    use chrono::Duration;
+    use chrono::{Duration, NaiveDateTime, NaiveTime};
 
     #[test]
     fn test_rrule_with_date() {
@@ -239,7 +242,7 @@ mod tests {
         assert_eq!(days.len(), 5, "RRule should finish before the count is up");
 
         let finish = NaiveDate::from_ymd(2020, 1, 29);
-        let weeks: Vec<NaiveDate> = RRule::weekly(start).with_finish(finish).collect();
+        let weeks: Vec<NaiveDate> = RRule::weekly(start).with_end(finish).collect();
         assert_eq!(weeks[0], start, "RRule should start at the initial day");
         assert_eq!(
             weeks[1],
@@ -287,11 +290,101 @@ mod tests {
 
     #[test]
     fn test_rrule_with_datetime() {
-        todo!()
+        // Seconds
+        let o_clock = NaiveTime::from_hms(1, 2, 3);
+        let day = NaiveDate::from_ymd(2020, 1, 1);
+        let start = NaiveDateTime::new(day, o_clock);
+
+        let seconds_passed = 60 * 60 + 2 * 60 + 3;
+
+        for (i, date) in RRule::secondly(start)
+            .with_count(24 * 60 * 60 * 2)
+            .enumerate()
+        {
+            if i > 0 {
+                assert!(date > start, "Time should increase");
+            }
+
+            if i < 24 * 60 * 60 - seconds_passed {
+                assert_eq!(
+                    date.date(),
+                    day,
+                    "Expected {} seconds to be on first day",
+                    date
+                );
+            } else if i < 2 * 24 * 60 * 60 - seconds_passed {
+                assert_eq!(
+                    date.date(),
+                    day + Duration::days(1),
+                    "Expected {} to be on second day",
+                    date
+                );
+            } else {
+                assert_eq!(
+                    date.date(),
+                    day + Duration::days(2),
+                    "Expected {} to be on third day",
+                    date
+                );
+            }
+        }
+
+        // Months
+        let interesting = NaiveDate::from_ymd(2020, 1, 30); // The day will change each month
+        let istart = NaiveDateTime::new(interesting, o_clock);
+
+        let months: Vec<NaiveDateTime> = RRule::monthly(istart).with_count(5).collect();
+        assert_eq!(months[0], istart, "RRule should start at the initial day");
+        assert_eq!(
+            months[1].date(),
+            NaiveDate::from_ymd(2020, 2, 29),
+            "RRule should handle Feb"
+        );
+        assert_eq!(months[1].time(), o_clock, "Time should remain the same");
+        assert_eq!(
+            months[2].date(),
+            NaiveDate::from_ymd(2020, 3, 30),
+            "RRule should not loose days"
+        );
+        assert_eq!(months[2].time(), o_clock, "Time should remain the same");
     }
 
     #[test]
     fn test_rrule_edge_cases() {
-        todo!()
+        let start = NaiveDate::from_ymd(2020, 1, 1);
+
+        // Zero count
+        let mut dates: Vec<NaiveDate> = RRule::daily(start).with_count(0).collect();
+        assert_eq!(dates.len(), 0);
+
+        // End equals start
+        dates = RRule::daily(start).with_end(start).collect();
+        assert_eq!(dates.len(), 0);
+
+        // End before start
+        // TODO: the only way to know to stop is to determine the forward/backwardness of the duration.
+        // This is a concept which is ill formed (e.g. +1 month - 30 days) so needs thought.
+        // dates = RRule::daily(start).with_end(start - Duration::days(1)).collect();
+        // assert_eq!(dates.len(), 0);
+    }
+
+    #[test]
+    fn test_backwards_rrule() {
+        let start = NaiveDate::from_ymd(2020, 3, 31);
+        let end = NaiveDate::from_ymd(2019, 12, 31);
+        let freq = RelativeDuration::months(-1);
+
+        let dates1: Vec<NaiveDate> = RRule::new(start, freq).with_count(3).collect();
+        assert_eq!(dates1.len(), 3);
+        assert_eq!(dates1[0], NaiveDate::from_ymd(2020, 3, 31));
+        assert_eq!(dates1[1], NaiveDate::from_ymd(2020, 2, 29));
+        assert_eq!(dates1[2], NaiveDate::from_ymd(2020, 1, 31));
+
+        let dates2: Vec<NaiveDate> = RRule::new(start, freq).with_end(end).collect();
+
+        assert_eq!(dates1.len(), dates2.len());
+        for k in 0..dates1.len() {
+            assert_eq!(dates1[k], dates2[k]);
+        }
     }
 }
