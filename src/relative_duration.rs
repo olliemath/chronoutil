@@ -36,6 +36,7 @@ impl From<StdDuration> for RelativeDuration {
 
 impl RelativeDuration {
     /// Makes a new `RelativeDuration` with given number of years.
+    ///
     /// Equivalent to `RealtiveDuration::months(years * 12)` with overflow checks.
     /// Panics when the duration is out of bounds.
     #[inline]

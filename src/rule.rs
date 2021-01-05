@@ -77,7 +77,7 @@ where
         Self::new(from, RelativeDuration::years(1))
     }
 
-    /// Limits the DateRule to a given number of dates.
+    /// Limits the `DateRule` to a given number of dates.
     pub fn with_count(&self, number: usize) -> Self {
         Self {
             freq: self.freq,
@@ -88,7 +88,13 @@ where
         }
     }
 
-    /// Limits the DateRule to a maximim date (exclusive).
+    /// Limits the `DateRule` to an extremal date (exclusive).
+    ///
+    /// If using a `RelativeDuration` which shifts dates backwards, the `end` date should
+    /// be before the current date.
+    ///
+    /// **WARNING**: a forward-shifting duration with an end-date before the initial date
+    /// will result in an iterator which does not terminate.
     pub fn with_end(&self, end: D) -> Self {
         Self {
             freq: self.freq,
