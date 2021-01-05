@@ -4,9 +4,10 @@ fn is_leap_year(year: i32) -> bool {
     year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
 }
 
-pub fn shift_months<D: Datelike>(date: D, m: i32) -> D {
-    let mut year = date.year() + m / 12;
-    let mut month = date.month() as i32 + m % 12;
+// Shift a date by the given number of months
+pub fn shift_months<D: Datelike>(date: D, months: i32) -> D {
+    let mut year = date.year() + months / 12;
+    let mut month = date.month() as i32 + months % 12;
     let mut day = date.day();
 
     if month < 1 {
@@ -35,9 +36,27 @@ pub fn shift_months<D: Datelike>(date: D, m: i32) -> D {
         .unwrap()
 }
 
-pub fn shift_years<D: Datelike>(date: D, x: i32) -> D {
-    shift_months(date, x * 12)
+// Shift a date by the given number of years
+pub fn shift_years<D: Datelike>(date: D, years: i32) -> D {
+    shift_months(date, years * 12)
 }
+
+// Shift the date to have the given month
+pub fn with_month<D: Datelike>(date: D, month: u32) -> Option<D> {
+    if month == 0 || month > 12 {
+        None
+    } else {
+        let delta = month - date.month();
+        Some(shift_months(date, delta as i32))
+    }
+}
+
+pub fn with_year<D: Datelike>(date: D, year: i32) -> D {
+    let delta = year - date.year();
+    shift_years(date, delta)
+}
+
+
 
 #[cfg(test)]
 mod tests {
@@ -133,5 +152,41 @@ mod tests {
         assert_eq!(shift_years(base, -4), NaiveDate::from_ymd(2016, 2, 29));
         assert_eq!(shift_years(base, -20), NaiveDate::from_ymd(2000, 2, 29));
         assert_eq!(shift_years(base, -120), NaiveDate::from_ymd(1900, 2, 28));
+    }
+
+    #[test]
+    fn test_with_month() {
+        let base = NaiveDate::from_ymd(2020, 1, 31);
+
+        assert_eq!(with_month(base, 0), None);
+        assert_eq!(with_month(base, 1), Some(base));
+        assert_eq!(with_month(base, 2).unwrap(), NaiveDate::from_ymd(2020, 2, 29));
+        assert_eq!(with_month(base, 3).unwrap(), NaiveDate::from_ymd(2020, 3, 31));
+        assert_eq!(with_month(base, 4).unwrap(), NaiveDate::from_ymd(2020, 4, 30));
+        assert_eq!(with_month(base, 5).unwrap(), NaiveDate::from_ymd(2020, 5, 31));
+        assert_eq!(with_month(base, 6).unwrap(), NaiveDate::from_ymd(2020, 6, 30));
+        assert_eq!(with_month(base, 7).unwrap(), NaiveDate::from_ymd(2020, 7, 31));
+        assert_eq!(with_month(base, 8).unwrap(), NaiveDate::from_ymd(2020, 8, 31));
+        assert_eq!(with_month(base, 9).unwrap(), NaiveDate::from_ymd(2020, 9, 30));
+        assert_eq!(with_month(base, 10).unwrap(), NaiveDate::from_ymd(2020, 10, 31));
+        assert_eq!(with_month(base, 11).unwrap(), NaiveDate::from_ymd(2020, 11, 30));
+        assert_eq!(with_month(base, 12).unwrap(), NaiveDate::from_ymd(2020, 12, 31));
+        assert_eq!(with_month(base, 13), None);
+
+        assert_eq!(
+            with_month(NaiveDate::from_ymd(2021, 1, 31), 2),
+            Some(NaiveDate::from_ymd(2021, 2, 28))
+        )
+    }
+
+    #[test]
+    fn test_with_year() {
+        let base = NaiveDate::from_ymd(2020, 2, 29);
+
+        assert_eq!(with_year(base, 2024), NaiveDate::from_ymd(2024, 2, 29));
+        assert_eq!(with_year(base, 2021), NaiveDate::from_ymd(2021, 2, 28));
+        assert_eq!(with_year(base, 2020), NaiveDate::from_ymd(2020, 2, 29));
+        assert_eq!(with_year(base, 2019), NaiveDate::from_ymd(2019, 2, 28));
+        assert_eq!(with_year(base, 2016), NaiveDate::from_ymd(2016, 2, 29));
     }
 }
