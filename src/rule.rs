@@ -3,12 +3,12 @@ use std::iter::Iterator;
 use super::relative_duration::RelativeDuration;
 use chrono::{Date, DateTime, Datelike, NaiveDate, NaiveDateTime, TimeZone};
 
-// RRule is an iterator for yielding evenly spaced dates
-// according to a given RelativeDuration. It avoids some
-// of the pitfalls that naive usage of RelativeDuration
-// can incur.
+/// DateRule is an iterator for yielding evenly spaced dates
+/// according to a given RelativeDuration. It avoids some
+/// of the pitfalls that naive usage of RelativeDuration
+/// can incur.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub struct RRule<D: Datelike> {
+pub struct DateRule<D: Datelike> {
     freq: RelativeDuration,
     start: D,
     end: Option<D>,
@@ -16,11 +16,11 @@ pub struct RRule<D: Datelike> {
     _current_count: usize,
 }
 
-impl<D> RRule<D>
+impl<D> DateRule<D>
 where
     D: Datelike + Copy,
 {
-    // Create a new RRule from an initial date and relative duration.
+    /// Creates a new `DateRule` from an initial date and relative duration.
     #[inline]
     pub fn new(start: D, freq: RelativeDuration) -> Self {
         Self {
@@ -32,49 +32,51 @@ where
         }
     }
 
-    // Create an RRule yielding dates one second appart.
+    /// Creates a `DateRule` yielding dates one second appart.
     #[inline]
     pub fn secondly(from: D) -> Self {
         Self::new(from, RelativeDuration::seconds(1))
     }
 
-    // Create an RRule yielding dates one minute appart.
+    /// Creates a `DateRule` yielding dates one minute appart.
     #[inline]
     pub fn minutely(from: D) -> Self {
         Self::new(from, RelativeDuration::minutes(1))
     }
 
-    // Create an RRule yielding dates one hour appart.
+    /// Creates a `DateRule` yielding dates one hour appart.
     #[inline]
     pub fn hourly(from: D) -> Self {
         Self::new(from, RelativeDuration::hours(1))
     }
 
-    // Create an RRule yielding dates one day appart.
+    /// Creates a `DateRule` yielding dates one day appart.
     #[inline]
     pub fn daily(from: D) -> Self {
         Self::new(from, RelativeDuration::days(1))
     }
 
-    // Create an RRule yielding dates one week appart.
+    /// Creates a `DateRule` yielding dates one week appart.
     #[inline]
     pub fn weekly(from: D) -> Self {
         Self::new(from, RelativeDuration::weeks(1))
     }
 
-    // Create an RRule yielding dates one month appart.
+    /// Creates a `DateRule` yielding dates one month appart.
+    /// Ambiguous month-ends are shifted backwards as necessary.
     #[inline]
     pub fn monthly(from: D) -> Self {
         Self::new(from, RelativeDuration::months(1))
     }
 
-    // Create an RRule yielding dates one year appart.
+    /// Creates a `DateRule` yielding dates one year appart.
+    /// Ambiguous month-ends are shifted backwards as necessary.
     #[inline]
     pub fn yearly(from: D) -> Self {
         Self::new(from, RelativeDuration::years(1))
     }
 
-    // Limit the RRule to a given number of dates.
+    // Limit the DateRule to a given number of dates.
     pub fn with_count(&self, number: usize) -> Self {
         Self {
             freq: self.freq,
@@ -85,7 +87,7 @@ where
         }
     }
 
-    // Limit the RRule to a maximim date (exclusive).
+    // Limit the DateRule to a maximim date (exclusive).
     pub fn with_end(&self, end: D) -> Self {
         Self {
             freq: self.freq,
@@ -99,7 +101,7 @@ where
 
 // The following is just copy-pasta, mostly because we
 // can't impl<T> Add<RelativeDuration> for T with T: Datelike
-impl Iterator for RRule<NaiveDate> {
+impl Iterator for DateRule<NaiveDate> {
     type Item = NaiveDate;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -120,7 +122,7 @@ impl Iterator for RRule<NaiveDate> {
     }
 }
 
-impl Iterator for RRule<NaiveDateTime> {
+impl Iterator for DateRule<NaiveDateTime> {
     type Item = NaiveDateTime;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -138,7 +140,7 @@ impl Iterator for RRule<NaiveDateTime> {
     }
 }
 
-impl<Tz> Iterator for RRule<Date<Tz>>
+impl<Tz> Iterator for DateRule<Date<Tz>>
 where
     Tz: TimeZone,
 {
@@ -159,7 +161,7 @@ where
     }
 }
 
-impl<Tz> Iterator for RRule<DateTime<Tz>>
+impl<Tz> Iterator for DateRule<DateTime<Tz>>
 where
     Tz: TimeZone,
 {
@@ -191,7 +193,7 @@ mod tests {
         let start = NaiveDate::from_ymd(2020, 1, 1);
 
         // Seconds, hours, minutes etc
-        for (i, date) in RRule::secondly(start)
+        for (i, date) in DateRule::secondly(start)
             .with_count(24 * 60 * 60 * 2)
             .enumerate()
         {
@@ -206,7 +208,7 @@ mod tests {
                 );
             }
         }
-        for (i, date) in RRule::minutely(start).with_count(24 * 60 * 2).enumerate() {
+        for (i, date) in DateRule::minutely(start).with_count(24 * 60 * 2).enumerate() {
             if i < 24 * 60 {
                 assert_eq!(date, start, "Expected {} minutes to be on first day", i);
             } else {
@@ -218,7 +220,7 @@ mod tests {
                 );
             }
         }
-        for (i, date) in RRule::hourly(start).with_count(24 * 2).enumerate() {
+        for (i, date) in DateRule::hourly(start).with_count(24 * 2).enumerate() {
             if i < 24 {
                 assert_eq!(date, start, "Expected {} hours to be on first day", i);
             } else {
@@ -232,60 +234,60 @@ mod tests {
         }
 
         // Days, weeks
-        let days: Vec<NaiveDate> = RRule::daily(start).with_count(5).collect();
-        assert_eq!(days[0], start, "RRule should start at the initial day");
+        let days: Vec<NaiveDate> = DateRule::daily(start).with_count(5).collect();
+        assert_eq!(days[0], start, "DateRule should start at the initial day");
         assert_eq!(
             days[1],
             start + Duration::days(1),
-            "RRule should increment in days"
+            "DateRule should increment in days"
         );
-        assert_eq!(days.len(), 5, "RRule should finish before the count is up");
+        assert_eq!(days.len(), 5, "DateRule should finish before the count is up");
 
         let finish = NaiveDate::from_ymd(2020, 1, 29);
-        let weeks: Vec<NaiveDate> = RRule::weekly(start).with_end(finish).collect();
-        assert_eq!(weeks[0], start, "RRule should start at the initial day");
+        let weeks: Vec<NaiveDate> = DateRule::weekly(start).with_end(finish).collect();
+        assert_eq!(weeks[0], start, "DateRule should start at the initial day");
         assert_eq!(
             weeks[1],
             start + Duration::days(7),
-            "RRule should increment in weeks"
+            "DateRule should increment in weeks"
         );
-        assert_eq!(weeks.len(), 4, "RRule should finish before the final day");
+        assert_eq!(weeks.len(), 4, "DateRule should finish before the final day");
 
         // Months, years
         let interesting = NaiveDate::from_ymd(2020, 1, 30); // The day will change each month
 
-        let months: Vec<NaiveDate> = RRule::monthly(interesting).with_count(5).collect();
+        let months: Vec<NaiveDate> = DateRule::monthly(interesting).with_count(5).collect();
         assert_eq!(
             months[0], interesting,
-            "RRule should start at the initial day"
+            "DateRule should start at the initial day"
         );
         assert_eq!(
             months[1],
             NaiveDate::from_ymd(2020, 2, 29),
-            "RRule should handle Feb"
+            "DateRule should handle Feb"
         );
         assert_eq!(
             months[2],
             NaiveDate::from_ymd(2020, 3, 30),
-            "RRule should not loose days"
+            "DateRule should not loose days"
         );
         assert_eq!(
             months.len(),
             5,
-            "RRule should finish before the count is up"
+            "DateRule should finish before the count is up"
         );
 
-        let years: Vec<NaiveDate> = RRule::yearly(interesting).with_count(3).collect();
+        let years: Vec<NaiveDate> = DateRule::yearly(interesting).with_count(3).collect();
         assert_eq!(
             years[0], interesting,
-            "RRule should start at the initial day"
+            "DateRule should start at the initial day"
         );
         assert_eq!(
             years[1],
             NaiveDate::from_ymd(2021, 1, 30),
-            "RRule should increment in years"
+            "DateRule should increment in years"
         );
-        assert_eq!(years.len(), 3, "RRule should finish before the count is up");
+        assert_eq!(years.len(), 3, "DateRule should finish before the count is up");
     }
 
     #[test]
@@ -297,7 +299,7 @@ mod tests {
 
         let seconds_passed = 60 * 60 + 2 * 60 + 3;
 
-        for (i, date) in RRule::secondly(start)
+        for (i, date) in DateRule::secondly(start)
             .with_count(24 * 60 * 60 * 2)
             .enumerate()
         {
@@ -333,18 +335,18 @@ mod tests {
         let interesting = NaiveDate::from_ymd(2020, 1, 30); // The day will change each month
         let istart = NaiveDateTime::new(interesting, o_clock);
 
-        let months: Vec<NaiveDateTime> = RRule::monthly(istart).with_count(5).collect();
-        assert_eq!(months[0], istart, "RRule should start at the initial day");
+        let months: Vec<NaiveDateTime> = DateRule::monthly(istart).with_count(5).collect();
+        assert_eq!(months[0], istart, "DateRule should start at the initial day");
         assert_eq!(
             months[1].date(),
             NaiveDate::from_ymd(2020, 2, 29),
-            "RRule should handle Feb"
+            "DateRule should handle Feb"
         );
         assert_eq!(months[1].time(), o_clock, "Time should remain the same");
         assert_eq!(
             months[2].date(),
             NaiveDate::from_ymd(2020, 3, 30),
-            "RRule should not loose days"
+            "DateRule should not loose days"
         );
         assert_eq!(months[2].time(), o_clock, "Time should remain the same");
     }
@@ -354,17 +356,17 @@ mod tests {
         let start = NaiveDate::from_ymd(2020, 1, 1);
 
         // Zero count
-        let mut dates: Vec<NaiveDate> = RRule::daily(start).with_count(0).collect();
+        let mut dates: Vec<NaiveDate> = DateRule::daily(start).with_count(0).collect();
         assert_eq!(dates.len(), 0);
 
         // End equals start
-        dates = RRule::daily(start).with_end(start).collect();
+        dates = DateRule::daily(start).with_end(start).collect();
         assert_eq!(dates.len(), 0);
 
         // End before start
         // TODO: the only way to know to stop is to determine the forward/backwardness of the duration.
         // This is a concept which is ill formed (e.g. +1 month - 30 days) so needs thought.
-        // dates = RRule::daily(start).with_end(start - Duration::days(1)).collect();
+        // dates = DateRule::daily(start).with_end(start - Duration::days(1)).collect();
         // assert_eq!(dates.len(), 0);
     }
 
@@ -374,13 +376,13 @@ mod tests {
         let end = NaiveDate::from_ymd(2019, 12, 31);
         let freq = RelativeDuration::months(-1);
 
-        let dates1: Vec<NaiveDate> = RRule::new(start, freq).with_count(3).collect();
+        let dates1: Vec<NaiveDate> = DateRule::new(start, freq).with_count(3).collect();
         assert_eq!(dates1.len(), 3);
         assert_eq!(dates1[0], NaiveDate::from_ymd(2020, 3, 31));
         assert_eq!(dates1[1], NaiveDate::from_ymd(2020, 2, 29));
         assert_eq!(dates1[2], NaiveDate::from_ymd(2020, 1, 31));
 
-        let dates2: Vec<NaiveDate> = RRule::new(start, freq).with_end(end).collect();
+        let dates2: Vec<NaiveDate> = DateRule::new(start, freq).with_end(end).collect();
 
         assert_eq!(dates1.len(), dates2.len());
         for k in 0..dates1.len() {
