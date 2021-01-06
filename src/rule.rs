@@ -1,6 +1,7 @@
 //! Implements `DateRule` - an iterator yielding evenly spaced dates.
 use std::iter::Iterator;
 
+use super::delta::with_day;
 use super::relative_duration::RelativeDuration;
 use chrono::{Date, DateTime, Datelike, NaiveDate, NaiveDateTime, TimeZone};
 
@@ -14,6 +15,7 @@ pub struct DateRule<D: Datelike> {
     start: D,
     end: Option<D>,
     count: Option<usize>,
+    rolling_day: Option<u32>,
     _current_count: usize,
 }
 
@@ -29,6 +31,7 @@ where
             start,
             end: None,
             count: None,
+            rolling_day: None,
             _current_count: 0,
         }
     }
@@ -84,6 +87,7 @@ where
             start: self.start,
             end: None,
             count: Some(number),
+            rolling_day: self.rolling_day,
             _current_count: 0,
         }
     }
@@ -93,7 +97,7 @@ where
     /// If using a `RelativeDuration` which shifts dates backwards, the `end` date should
     /// be before the current date.
     ///
-    /// **WARNING**: a forward-shifting duration with an end-date before the initial date
+    /// WARNING: a forward-shifting duration with an end-date before the initial date
     /// will result in an iterator which does not terminate.
     pub fn with_end(&self, end: D) -> Self {
         Self {
@@ -101,7 +105,45 @@ where
             start: self.start,
             end: Some(end),
             count: None,
+            rolling_day: self.rolling_day,
             _current_count: 0,
+        }
+    }
+
+    /// Ensure the `DateRule` yields new dates which are *always* fall on the
+    /// given rolling day (modulo backwards shifting for month ends). Returns
+    /// Err if the rolling day is not in the range 1-31.
+    ///
+    /// For example:
+    /// ```rust
+    /// # use chrono::NaiveDate;
+    /// # use chronoutil::DateRule;
+    /// let start = NaiveDate::from_ymd(2020, 2, 29);
+    /// let mut rule = DateRule::monthly(start).with_rolling_day(31).unwrap();
+    ///
+    /// assert_eq!(rule.next().unwrap(), NaiveDate::from_ymd(2020, 2, 29));
+    /// assert_eq!(rule.next().unwrap(), NaiveDate::from_ymd(2020, 3, 31));
+    /// assert_eq!(rule.next().unwrap(), NaiveDate::from_ymd(2020, 4, 30));
+    /// assert_eq!(rule.next().unwrap(), NaiveDate::from_ymd(2020, 5, 31));
+    /// // etc.
+    /// ```
+    ///
+    /// It produces values equivalent to
+    /// ```ignore
+    /// rule.map(|d| with_day(d, rolling_day).unwrap())
+    /// ```
+    pub fn with_rolling_day(&self, rolling_day: u32) -> Result<Self, String> {
+        if rolling_day == 0 || rolling_day > 31 {
+            Err(format!("Rolling day {} not in range 1-31", rolling_day))
+        } else {
+            Ok(Self {
+                freq: self.freq,
+                start: self.start,
+                end: self.end,
+                count: self.count,
+                rolling_day: Some(rolling_day),
+                _current_count: self._current_count,
+            })
         }
     }
 }
@@ -116,12 +158,17 @@ impl Iterator for DateRule<NaiveDate> {
             return None;
         }
 
-        let current_date = self.start + self.freq * self._current_count as i32;
-        if self.end.is_some()
-            && ((self.end.unwrap() >= self.start && current_date >= self.end.unwrap())
-                || (self.end.unwrap() < self.start && current_date <= self.end.unwrap()))
-        {
-            return None;
+        let mut current_date = self.start + self.freq * self._current_count as i32;
+        if let Some(rolling_day) = self.rolling_day {
+            current_date = with_day(current_date, rolling_day).unwrap();
+        }
+
+        if let Some(end) = &self.end {
+            if (*end >= self.start && current_date >= *end)
+                || (*end < self.start && current_date <= *end)
+            {
+                return None;
+            }
         }
 
         self._current_count += 1;
@@ -137,9 +184,17 @@ impl Iterator for DateRule<NaiveDateTime> {
             return None;
         }
 
-        let current_date = self.start + self.freq * self._current_count as i32;
-        if self.end.is_some() && current_date >= self.end.unwrap() {
-            return None;
+        let mut current_date = self.start + self.freq * self._current_count as i32;
+        if let Some(rolling_day) = self.rolling_day {
+            current_date = with_day(current_date, rolling_day).unwrap();
+        }
+
+        if let Some(end) = &self.end {
+            if (*end >= self.start && current_date >= *end)
+                || (*end < self.start && current_date <= *end)
+            {
+                return None;
+            }
         }
 
         self._current_count += 1;
@@ -158,9 +213,17 @@ where
             return None;
         }
 
-        let current_date = self.start.clone() + self.freq * self._current_count as i32;
-        if self.end.is_some() && Some(current_date.clone()) >= self.end {
-            return None;
+        let mut current_date = self.start.clone() + self.freq * self._current_count as i32;
+        if let Some(rolling_day) = self.rolling_day {
+            current_date = with_day(current_date, rolling_day).unwrap();
+        }
+
+        if let Some(end) = &self.end {
+            if (*end >= self.start && current_date >= *end)
+                || (*end < self.start && current_date <= *end)
+            {
+                return None;
+            }
         }
 
         self._current_count += 1;
@@ -179,9 +242,17 @@ where
             return None;
         }
 
-        let current_date = self.start.clone() + self.freq * self._current_count as i32;
-        if self.end.is_some() && Some(current_date.clone()) >= self.end {
-            return None;
+        let mut current_date = self.start.clone() + self.freq * self._current_count as i32;
+        if let Some(rolling_day) = self.rolling_day {
+            current_date = with_day(current_date, rolling_day).unwrap();
+        }
+
+        if let Some(end) = &self.end {
+            if (*end >= self.start && current_date >= *end)
+                || (*end < self.start && current_date <= *end)
+            {
+                return None;
+            }
         }
 
         self._current_count += 1;
