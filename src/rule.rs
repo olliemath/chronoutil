@@ -215,7 +215,10 @@ mod tests {
                 );
             }
         }
-        for (i, date) in DateRule::minutely(start).with_count(24 * 60 * 2).enumerate() {
+        for (i, date) in DateRule::minutely(start)
+            .with_count(24 * 60 * 2)
+            .enumerate()
+        {
             if i < 24 * 60 {
                 assert_eq!(date, start, "Expected {} minutes to be on first day", i);
             } else {
@@ -248,7 +251,11 @@ mod tests {
             start + Duration::days(1),
             "DateRule should increment in days"
         );
-        assert_eq!(days.len(), 5, "DateRule should finish before the count is up");
+        assert_eq!(
+            days.len(),
+            5,
+            "DateRule should finish before the count is up"
+        );
 
         let finish = NaiveDate::from_ymd(2020, 1, 29);
         let weeks: Vec<NaiveDate> = DateRule::weekly(start).with_end(finish).collect();
@@ -258,7 +265,11 @@ mod tests {
             start + Duration::days(7),
             "DateRule should increment in weeks"
         );
-        assert_eq!(weeks.len(), 4, "DateRule should finish before the final day");
+        assert_eq!(
+            weeks.len(),
+            4,
+            "DateRule should finish before the final day"
+        );
 
         // Months, years
         let interesting = NaiveDate::from_ymd(2020, 1, 30); // The day will change each month
@@ -294,7 +305,11 @@ mod tests {
             NaiveDate::from_ymd(2021, 1, 30),
             "DateRule should increment in years"
         );
-        assert_eq!(years.len(), 3, "DateRule should finish before the count is up");
+        assert_eq!(
+            years.len(),
+            3,
+            "DateRule should finish before the count is up"
+        );
     }
 
     #[test]
@@ -343,7 +358,10 @@ mod tests {
         let istart = NaiveDateTime::new(interesting, o_clock);
 
         let months: Vec<NaiveDateTime> = DateRule::monthly(istart).with_count(5).collect();
-        assert_eq!(months[0], istart, "DateRule should start at the initial day");
+        assert_eq!(
+            months[0], istart,
+            "DateRule should start at the initial day"
+        );
         assert_eq!(
             months[1].date(),
             NaiveDate::from_ymd(2020, 2, 29),
