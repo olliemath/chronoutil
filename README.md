@@ -26,14 +26,14 @@ Put this in your `Cargo.toml`:
 
 ```toml
 [dependencies]
-chronoutil = "0.2.0"
+chronoutil = "0.2.1"
 ```
 
 ## Overview
 
 ### RelativeDuration
 
-ChronoUtils uses a [**`RelativeDuration`**](https://docs.rs/chronoutil/0.2.0/chronoutil/relative_duration/struct.RelativeDuration.html) type to represent the magnitude of a time span
+ChronoUtils uses a [**`RelativeDuration`**](https://docs.rs/chronoutil/0.2.1/chronoutil/relative_duration/struct.RelativeDuration.html) type to represent the magnitude of a time span
 which may not be absolute (i.e. which is not simply a fixed number of nanoseconds).
 A relative duration is made up of a number of months together with an absolute [`Duration`]()
 component.
@@ -60,7 +60,7 @@ assert_eq!(start + delta, NaiveDate::from_ymd(2020, 3, 1));
 ### DateRule
 
 ChronoUtil provides a
-[**`DateRule`**](https://docs.rs/chronoutil/0.2.0/chronoutil/rule/struct.DateRule.html)
+[**`DateRule`**](https://docs.rs/chronoutil/0.2.1/chronoutil/rule/struct.DateRule.html)
 iterator to reliably generate a collection of dates at regular intervals.
 For example, the following will yield one `NaiveDate` on the last day of each
 month in 2025:
@@ -75,10 +75,10 @@ let rule = DateRule::monthly(start).with_count(12);
 
 ChronoUtil also exposes useful shift functions which are used internally, namely:
 
-- [**`shift_months`**](https://docs.rs/chronoutil/0.2.0/chronoutil/delta/fn.shift_months.html) to shift a datelike value by a given number of months
-- [**`shift_years`**](https://docs.rs/chronoutil/0.2.0/chronoutil/delta/fn.shift_years.html) to shift a datelike value by a given number of years
-- [**`with_month`**](https://docs.rs/chronoutil/0.2.0/chronoutil/delta/fn.with_month.html) to shift a datelike value to a given month
-- [**`with_year`**](https://docs.rs/chronoutil/0.2.0/chronoutil/delta/fn.with_year.html) to shift a datelike value to a given year
+- [**`shift_months`**](https://docs.rs/chronoutil/0.2.1/chronoutil/delta/fn.shift_months.html) to shift a datelike value by a given number of months
+- [**`shift_years`**](https://docs.rs/chronoutil/0.2.1/chronoutil/delta/fn.shift_years.html) to shift a datelike value by a given number of years
+- [**`with_month`**](https://docs.rs/chronoutil/0.2.1/chronoutil/delta/fn.with_month.html) to shift a datelike value to a given month
+- [**`with_year`**](https://docs.rs/chronoutil/0.2.1/chronoutil/delta/fn.with_year.html) to shift a datelike value to a given year
 
 ## Design decisions and gotchas
 
