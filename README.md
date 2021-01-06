@@ -47,7 +47,7 @@ For example, the following will yield one `NaiveDate` on the last day of each
 month in 2025:
 
 ```rust
-let start = NaiveDate::ymd(2025, 1, 31);
+let start = NaiveDate::from_ymd(2025, 1, 31);
 let rule = DateRule<NaiveDate>::monthly(start).with_count(12);
 // 2025-1-31, 2025-2-28, 2025-3-31, 2025-4-30, ...
 ```
@@ -93,11 +93,11 @@ This leads us to an interesting point about the `RelativeDuration`: addition is 
 _associative_:
 
 ```rust
-let d1 = NaiveDate::ymd(2020, 1, 31) + RelativeDuration::months(1) + RelativeDuration::months(1);
-let d2 = NaiveDate::ymd(2020, 1, 31) + (RelativeDuration::months(1) + RelativeDuration::months(1));
+let d1 = (NaiveDate::from_ymd(2020, 1, 31) + RelativeDuration::months(1)) + RelativeDuration::months(1);
+let d2 = NaiveDate::from_ymd(2020, 1, 31) + (RelativeDuration::months(1) + RelativeDuration::months(1));
 
-assert_eq!(d1, NaiveDate::ymd(2020, 3, 29));
-assert_eq!(d2, NaiveDate::ymd(2020, 3, 31));
+assert_eq!(d1, NaiveDate::from_ymd(2020, 3, 29));
+assert_eq!(d2, NaiveDate::from_ymd(2020, 3, 31));
 ```
 
 If you want a series of shifted dates, we advise using the `DateRule`, which takes
