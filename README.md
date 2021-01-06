@@ -48,7 +48,7 @@ month in 2025:
 
 ```rust
 let start = NaiveDate::from_ymd(2025, 1, 31);
-let rule = DateRule<NaiveDate>::monthly(start).with_count(12);
+let rule = DateRule::monthly(start).with_count(12);
 // 2025-1-31, 2025-2-28, 2025-3-31, 2025-4-30, ...
 ```
 
