@@ -12,7 +12,7 @@
 //!
 //! ### RelativeDuration
 //!
-//! ChronoUtils uses a [**`RelativeDuration`**] type to represent the magnitude of a time span
+//! ChronoUtils uses a [RelativeDuration] type to represent the magnitude of a time span
 //! which may not be absolute (i.e. which is not simply a fixed number of nanoseconds).
 //! A relative duration is made up of a number of months together with an absolute duration
 //! component.
@@ -43,7 +43,7 @@
 //! ### DateRule
 //!
 //! ChronoUtil provides a
-//! [**`DateRule`**]
+//! [DateRule]
 //! iterator to reliably generate a collection of dates at regular intervals.
 //! For example, the following will yield one `NaiveDate` on the last day of each
 //! month in 2025:
@@ -60,10 +60,11 @@
 //!
 //! ChronoUtil also exposes useful shift functions which are used internally, namely:
 //!
-//! - [**`shift_months`**] to shift a datelike value by a given number of months
-//! - [**`shift_years`**] to shift a datelike value by a given number of years
-//! - [**`with_month`**] to shift a datelike value to a given month
-//! - [**`with_year`**] to shift a datelike value to a given year
+//! - [shift_months] to shift a datelike value by a given number of months
+//! - [shift_years] to shift a datelike value by a given number of years
+//! - [with_day] to shift a datelike value to a given day
+//! - [with_month] to shift a datelike value to a given month
+//! - [with_year] to shift a datelike value to a given year
 //!
 //! ## Design decisions and gotchas
 //!
@@ -131,4 +132,4 @@ pub mod rule;
 pub use relative_duration::RelativeDuration;
 pub use rule::DateRule;
 // Utility functions may be useful for others
-pub use delta::{is_leap_year, shift_months, shift_years, with_month, with_year};
+pub use delta::{is_leap_year, shift_months, shift_years, with_day, with_month, with_year};
