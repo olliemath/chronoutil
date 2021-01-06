@@ -3,7 +3,7 @@
 //!
 //! ChronoUtil provides the following utilities:
 //! - `RelativeDuration`: extending Chrono's `Duration` to add months and years
-//! - `DateRule`s: useful iterators yielding regular (e.g. monthly) dates
+//! - `DateRule`: useful iterators yielding regular (e.g. monthly) dates
 //! - Procedural helper functions for shifting datelike values by months and years
 //!
 //! It is heavily inspired by Python's [dateutil](https://github.com/dateutil/dateutil)
@@ -14,8 +14,31 @@
 //!
 //! ChronoUtils uses a [**`RelativeDuration`**] type to represent the magnitude of a time span
 //! which may not be absolute (i.e. which is not simply a fixed number of nanoseconds).
-//! A relative duration is made up of a number of months together with an absolute `Duration`
+//! A relative duration is made up of a number of months together with an absolute duration
 //! component.
+//!
+//! ```rust
+//! # use chrono::{NaiveDate};
+//! # use chronoutil::{RelativeDuration};
+//! let one_day = RelativeDuration::days(1);
+//! let one_month = RelativeDuration::months(1);
+//! let delta = one_month + one_day;
+//! let start = NaiveDate::from_ymd(2020, 1, 1);
+//! assert_eq!(start + delta, NaiveDate::from_ymd(2020, 2, 2));
+//! ```
+//!
+//! The behaviour of `RelativeDuration` is consistent and well-defined in edge-cases
+//! (see the Design Decisions section for an explanation):
+//!
+//! ```rust
+//! # use chrono::{NaiveDate};
+//! # use chronoutil::{RelativeDuration};
+//! let one_day = RelativeDuration::days(1);
+//! let one_month = RelativeDuration::months(1);
+//! let delta = one_month + one_day;
+//! let start = NaiveDate::from_ymd(2020, 1, 30);
+//! assert_eq!(start + delta, NaiveDate::from_ymd(2020, 3, 1));
+//! ```
 //!
 //! ### DateRule
 //!
@@ -77,15 +100,27 @@
 //! # use chrono::NaiveDate;
 //! # use chronoutil::RelativeDuration;
 //!
-//! let d1 = (NaiveDate::from_ymd(2020, 1, 31) + RelativeDuration::months(1)) + RelativeDuration::months(1);
-//! let d2 = NaiveDate::from_ymd(2020, 1, 31) + (RelativeDuration::months(1) + RelativeDuration::months(1));
+//! let d1 = (NaiveDate::from_ymd(2020, 1, 31) + RelativeDuration::months(1))
+//!             + RelativeDuration::months(1);
+//! let d2 = NaiveDate::from_ymd(2020, 1, 31)
+//!             + (RelativeDuration::months(1) + RelativeDuration::months(1));
 //!
 //! assert_eq!(d1, NaiveDate::from_ymd(2020, 3, 29));
 //! assert_eq!(d2, NaiveDate::from_ymd(2020, 3, 31));
 //! ```
 //!
 //! If you want a series of shifted dates, we advise using the `DateRule`, which takes
-//! account of some of these subtleties
+//! account of some of these subtleties:
+//! ```rust
+//! # use chrono::NaiveDate;
+//! # use chronoutil::{RelativeDuration, DateRule};
+//! let start = NaiveDate::from_ymd(2020, 1, 31);
+//! let delta = RelativeDuration::months(1);
+//! let mut rule = DateRule::new(start, delta);
+//! assert_eq!(rule.next().unwrap(), NaiveDate::from_ymd(2020, 1, 31));
+//! assert_eq!(rule.next().unwrap(), NaiveDate::from_ymd(2020, 2, 29));
+//! assert_eq!(rule.next().unwrap(), NaiveDate::from_ymd(2020, 3, 31));
+//! ```
 
 extern crate chrono;
 

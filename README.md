@@ -38,6 +38,25 @@ which may not be absolute (i.e. which is not simply a fixed number of nanosecond
 A relative duration is made up of a number of months together with an absolute [`Duration`]()
 component.
 
+```rust
+let one_day = RelativeDuration::days(1);
+let one_month = RelativeDuration::months(1);
+let delta = one_month + one_day;
+let start = NaiveDate::from_ymd(2020, 1, 1);
+assert_eq!(start + delta, NaiveDate::from_ymd(2020, 2, 2));
+```
+
+The behaviour of `RelativeDuration` is consistent and well-defined in edge-cases
+(see the Design Decisions section for an explanation):
+
+```rust
+let one_day = RelativeDuration::days(1);
+let one_month = RelativeDuration::months(1);
+let delta = one_month + one_day;
+let start = NaiveDate::from_ymd(2020, 1, 30);
+assert_eq!(start + delta, NaiveDate::from_ymd(2020, 3, 1));
+```
+
 ### DateRule
 
 ChronoUtil provides a
@@ -93,12 +112,22 @@ This leads us to an interesting point about the `RelativeDuration`: addition is 
 _associative_:
 
 ```rust
-let d1 = (NaiveDate::from_ymd(2020, 1, 31) + RelativeDuration::months(1)) + RelativeDuration::months(1);
-let d2 = NaiveDate::from_ymd(2020, 1, 31) + (RelativeDuration::months(1) + RelativeDuration::months(1));
+let d1 = (NaiveDate::from_ymd(2020, 1, 31) + RelativeDuration::months(1))
+            + RelativeDuration::months(1);
+let d2 = NaiveDate::from_ymd(2020, 1, 31)
+            + (RelativeDuration::months(1) + RelativeDuration::months(1));
 
 assert_eq!(d1, NaiveDate::from_ymd(2020, 3, 29));
 assert_eq!(d2, NaiveDate::from_ymd(2020, 3, 31));
 ```
 
 If you want a series of shifted dates, we advise using the `DateRule`, which takes
-account of some of these subtleties
+account of some of these subtleties:
+```rust
+let start = NaiveDate::from_ymd(2020, 1, 31);
+let delta = RelativeDuration::months(1);
+let mut rule = DateRule::new(start, delta);
+assert_eq!(rule.next().unwrap(), NaiveDate::from_ymd(2020, 1, 31));
+assert_eq!(rule.next().unwrap(), NaiveDate::from_ymd(2020, 2, 29));
+assert_eq!(rule.next().unwrap(), NaiveDate::from_ymd(2020, 3, 31));
+```
