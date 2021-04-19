@@ -165,7 +165,10 @@ mod tests {
         assert_eq!(shift_months(base, -13), NaiveDate::from_ymd(2018, 12, 31));
 
         assert_eq!(shift_months(base, 1265), NaiveDate::from_ymd(2125, 6, 30));
+    }
 
+    #[test]
+    fn test_shift_months_with_overflow() {
         let base = NaiveDate::from_ymd(2020, 12, 31);
 
         assert_eq!(shift_months(base, 0), base);
