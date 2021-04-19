@@ -27,8 +27,8 @@ fn normalise_day(year: i32, month: u32, day: u32) -> u32 {
 /// Shift a date by the given number of months.
 /// Ambiguous month-ends are shifted backwards as necessary.
 pub fn shift_months<D: Datelike>(date: D, months: i32) -> D {
-    let mut year = date.year() + months / 12;
-    let mut month = date.month() as i32 + months % 12;
+    let mut year = date.year() + (date.month() as i32 + months) / 12;
+    let mut month = (date.month() as i32 + months) % 12;
     let mut day = date.day();
 
     if month < 1 {
@@ -165,6 +165,20 @@ mod tests {
         assert_eq!(shift_months(base, -13), NaiveDate::from_ymd(2018, 12, 31));
 
         assert_eq!(shift_months(base, 1265), NaiveDate::from_ymd(2125, 6, 30));
+
+        let base = NaiveDate::from_ymd(2020, 12, 31);
+
+        assert_eq!(shift_months(base, 0), base);
+        assert_eq!(shift_months(base, 1), NaiveDate::from_ymd(2021, 1, 31));
+        assert_eq!(shift_months(base, 2), NaiveDate::from_ymd(2021, 2, 28));
+        assert_eq!(shift_months(base, 12), NaiveDate::from_ymd(2021, 12, 31));
+        assert_eq!(shift_months(base, 18), NaiveDate::from_ymd(2022, 6, 30));
+
+        assert_eq!(shift_months(base, -1), NaiveDate::from_ymd(2020, 11, 30));
+        assert_eq!(shift_months(base, -2), NaiveDate::from_ymd(2020, 10, 31));
+        assert_eq!(shift_months(base, -10), NaiveDate::from_ymd(2020, 2, 29));
+        assert_eq!(shift_months(base, -12), NaiveDate::from_ymd(2019, 12, 31));
+        assert_eq!(shift_months(base, -18), NaiveDate::from_ymd(2019, 6, 30));
     }
 
     #[test]
