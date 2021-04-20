@@ -485,4 +485,34 @@ mod tests {
             assert_eq!(dates1[k], dates2[k]);
         }
     }
+
+    #[test]
+    fn test_long_running_rules() {
+        // Sanity tests for long-running shifts with various start months
+        for month in &[1, 3, 5, 7, 8, 10, 12] {
+            let start = NaiveDate::from_ymd(2020, *month as u32, 31);
+            let mut rule = DateRule::monthly(start);
+
+            for _ in 0..120 {
+                let shifted = rule.next().unwrap();
+                if shifted.month() == 1 {
+                    assert_eq!(shifted.day(), 31)
+                } else if shifted.month() == 4 {
+                    assert_eq!(shifted.day(), 30)
+                }
+            }
+
+            let freq = RelativeDuration::months(-1);
+            let mut rule = DateRule::new(start, freq);
+
+            for _ in 0..120 {
+                let shifted = rule.next().unwrap();
+                if shifted.month() == 1 {
+                    assert_eq!(shifted.day(), 31)
+                } else if shifted.month() == 4 {
+                    assert_eq!(shifted.day(), 30)
+                }
+            }
+        }
+    }
 }
