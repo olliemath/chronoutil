@@ -113,10 +113,11 @@ This leads us to an interesting point about the `RelativeDuration`: addition is 
 _associative_:
 
 ```rust
-let d1 = (NaiveDate::from_ymd(2020, 1, 31) + RelativeDuration::months(1))
-            + RelativeDuration::months(1);
-let d2 = NaiveDate::from_ymd(2020, 1, 31)
-            + (RelativeDuration::months(1) + RelativeDuration::months(1));
+let start = NaiveDate::from_ymd(2020, 1, 31);
+let delta = RelativeDuration::months(1);
+
+let d1 = (start + delta) + delta;
+let d2 = start + (delta + delta);
 
 assert_eq!(d1, NaiveDate::from_ymd(2020, 3, 29));
 assert_eq!(d2, NaiveDate::from_ymd(2020, 3, 31));
