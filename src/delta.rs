@@ -9,14 +9,13 @@ pub fn is_leap_year(year: i32) -> bool {
 
 // If the day lies within the month, this function has no effect. Otherwise, it shifts
 // day backwards to the final day of the month.
+// XXX: No attempt is made to handle days outside the 1-31 range.
 #[inline]
 fn normalise_day(year: i32, month: u32, day: u32) -> u32 {
-    if day > 28 && month == 2 {
-        if is_leap_year(year) {
-            29
-        } else {
-            28
-        }
+    if day <= 28 {
+        day
+    } else if month == 2 {
+        28 + is_leap_year(year) as u32
     } else if day == 31 && (month == 4 || month == 6 || month == 9 || month == 11) {
         30
     } else {
