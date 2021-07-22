@@ -1,4 +1,4 @@
-use chrono::naive::{NaiveDate};
+use chrono::naive::NaiveDate;
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
 use chronoutil::delta::{is_leap_year, shift_months};
@@ -7,7 +7,9 @@ fn shift_months_benchmark(c: &mut Criterion) {
     let shifts = black_box(-18..19);
     let base = NaiveDate::from_ymd(2020, 12, 31);
 
-    c.bench_function("shift_months", |b| b.iter::<Vec<NaiveDate>, _>(|| shifts.clone().map(|s| shift_months(base, s)).collect()));
+    c.bench_function("shift_months", |b| {
+        b.iter::<Vec<NaiveDate>, _>(|| shifts.clone().map(|s| shift_months(base, s)).collect())
+    });
 }
 
 fn in_month(y: i32, m: u32, d: u32) -> bool {
@@ -33,7 +35,9 @@ fn shift_months_many_benchmark(c: &mut Criterion) {
         }
     }
 
-    c.bench_function("shift_months_many", |b| b.iter::<Vec<NaiveDate>, _>(|| bases.iter().map(|b| shift_months(*b, shift)).collect()));
+    c.bench_function("shift_months_many", |b| {
+        b.iter::<Vec<NaiveDate>, _>(|| bases.iter().map(|b| shift_months(*b, shift)).collect())
+    });
 }
 
 criterion_group!(benches, shift_months_benchmark, shift_months_many_benchmark);
