@@ -3,6 +3,7 @@
 [![ChronoUtil GitHub Actions][gh-image]][gh-checks]
 [![ChronoUtil on crates.io][cratesio-image]][cratesio]
 [![ChronoUtil on docs.rs][docsrs-image]][docsrs]
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 [gh-image]: https://github.com/olliemath/chronoutil/workflows/test/badge.svg
 [gh-checks]: https://github.com/olliemath/chronoutil/actions?query=workflow%3Atest
@@ -110,7 +111,7 @@ Jan 31st by one month and obtain Feb 28th, a further shift of one month will be 
 _not_ Mar 31st.
 
 This leads us to an interesting point about the `RelativeDuration`: addition is not
-_associative_:
+_[associative](https://en.wikipedia.org/wiki/Associative_property)_:
 
 ```rust
 let start = NaiveDate::from_ymd(2020, 1, 31);
@@ -132,4 +133,24 @@ let mut rule = DateRule::new(start, delta);
 assert_eq!(rule.next().unwrap(), NaiveDate::from_ymd(2020, 1, 31));
 assert_eq!(rule.next().unwrap(), NaiveDate::from_ymd(2020, 2, 29));
 assert_eq!(rule.next().unwrap(), NaiveDate::from_ymd(2020, 3, 31));
+```
+
+## Using custom Datelike types
+
+If you have your own custom type which implements chrono's
+[Datelike](https://docs.rs/chrono/0.4.19/chrono/trait.Datelike.html) trait,
+then you can already use all of the shift functions (`shift_months`, `shift_year`).
+
+Using relative duration for your type will involve some simple boilerplate.
+Assuming that your custom date type `MyAwesomeUnicornDate` already has an
+implementation of `Add` for chrono's `Duration`, this would look like:
+```rust
+impl Add<RelativeDuration> for MyAwesomeUnicornDate {
+    type Output = MyAwesomeUnicornDate;
+
+    #[inline]
+    fn add(self, rhs: RelativeDuration) -> MyAwesomeUnicornDate {
+        shift_months(self, rhs.months) + rhs.duration
+    }
+}
 ```
