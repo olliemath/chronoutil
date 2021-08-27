@@ -38,14 +38,23 @@ pub fn shift_months<D: Datelike>(date: D, months: i32) -> D {
     day = normalise_day(year, month as u32, day);
 
     // This is slow but guaranteed to succeed (short of interger overflow)
-    date.with_day(1)
-        .unwrap()
-        .with_year(year)
-        .unwrap()
-        .with_month(month as u32)
-        .unwrap()
-        .with_day(day)
-        .unwrap()
+    if day <= 28 {
+        date.with_day(day)
+            .unwrap()
+            .with_month(month as u32)
+            .unwrap()
+            .with_year(year)
+            .unwrap()
+    } else {
+        date.with_day(1)
+            .unwrap()
+            .with_month(month as u32)
+            .unwrap()
+            .with_year(year)
+            .unwrap()
+            .with_day(day)
+            .unwrap()
+    }
 }
 
 /// Shift a date by the given number of years.
