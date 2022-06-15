@@ -7,7 +7,7 @@ use chrono::{Date, DateTime, Duration, NaiveDate, NaiveDateTime, TimeZone};
 use super::delta::shift_months;
 
 /// Relative time duration extending Chrono's Duration.
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 pub struct RelativeDuration {
     months: i32, // Sorry, cosmologists..
     duration: Duration,
@@ -37,7 +37,7 @@ impl From<StdDuration> for RelativeDuration {
 impl RelativeDuration {
     /// Makes a new `RelativeDuration` with given number of years.
     ///
-    /// Equivalent to `RealtiveDuration::months(years * 12)` with overflow checks.
+    /// Equivalent to `RelativeDuration::months(years * 12)` with overflow checks.
     /// Panics when the duration is out of bounds.
     #[inline]
     pub fn years(years: i32) -> RelativeDuration {
@@ -107,6 +107,33 @@ impl RelativeDuration {
         }
     }
 
+    /// Makes a new `RelativeDuration` with given number of milliseconds.
+    #[inline]
+    pub fn milliseconds(milliseconds: i64) -> RelativeDuration {
+        RelativeDuration {
+            months: 0,
+            duration: Duration::milliseconds(milliseconds),
+        }
+    }
+
+    /// Makes a new `RelativeDuration` with given number of microseconds.
+    #[inline]
+    pub fn microseconds(microseconds: i64) -> RelativeDuration {
+        RelativeDuration {
+            months: 0,
+            duration: Duration::microseconds(microseconds),
+        }
+    }
+
+    /// Makes a new `RelativeDuration` with given number of nanoseconds.
+    #[inline]
+    pub fn nanoseconds(nanos: i64) -> RelativeDuration {
+        RelativeDuration {
+            months: 0,
+            duration: Duration::nanoseconds(nanos),
+        }
+    }
+
     /// Update the `Duration` part of the current `RelativeDuration`.
     #[inline]
     pub fn with_duration(self, duration: Duration) -> RelativeDuration {
@@ -114,6 +141,21 @@ impl RelativeDuration {
             months: self.months,
             duration,
         }
+    }
+
+    /// A `RelativeDuration` representing zero.
+    #[inline]
+    pub fn zero() -> RelativeDuration {
+        RelativeDuration {
+            months: 0,
+            duration: Duration::zero(),
+        }
+    }
+
+    /// Returns true if the duration equals RelativeDuration::zero().
+    #[inline]
+    pub fn is_zero(&self) -> bool {
+        self.months == 0 && self.duration.is_zero()
     }
 }
 
