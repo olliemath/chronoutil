@@ -305,18 +305,6 @@ impl Sub<RelativeDuration> for NaiveDateTime {
     }
 }
 
-impl<Tz> Sub<RelativeDuration> for Date<Tz>
-where
-    Tz: TimeZone,
-{
-    type Output = Date<Tz>;
-
-    #[inline]
-    fn sub(self, rhs: RelativeDuration) -> Date<Tz> {
-        self + (-rhs)
-    }
-}
-
 impl<Tz> Sub<RelativeDuration> for DateTime<Tz>
 where
     Tz: TimeZone,
@@ -421,29 +409,32 @@ mod tests {
 
     #[test]
     fn test_date_negative_arithmetic() {
-        let base = NaiveDate::from_ymd(2020, 2, 29);
+        let base = NaiveDate::from_ymd_opt(2020, 2, 29).unwrap();
 
         assert_eq!(
             base - RelativeDuration {
                 months: 24,
                 duration: Duration::zero()
             },
-            NaiveDate::from_ymd(2018, 2, 28)
+            NaiveDate::from_ymd_opt(2018, 2, 28).unwrap()
         );
         assert_eq!(
             base - RelativeDuration {
                 months: 48,
                 duration: Duration::zero()
             },
-            NaiveDate::from_ymd(2016, 2, 29)
+            NaiveDate::from_ymd_opt(2016, 2, 29).unwrap()
         );
 
-        let not_leap = NaiveDate::from_ymd(2020, 2, 28);
+        let not_leap = NaiveDate::from_ymd_opt(2020, 2, 28).unwrap();
         let tricky_delta = RelativeDuration {
             months: 24,
             duration: Duration::days(-1),
         };
-        assert_eq!(base - tricky_delta, NaiveDate::from_ymd(2018, 3, 1));
+        assert_eq!(
+            base - tricky_delta,
+            NaiveDate::from_ymd_opt(2018, 3, 1).unwrap()
+        );
         assert_eq!(base - tricky_delta, not_leap - tricky_delta);
     }
 
