@@ -1,0 +1,26 @@
+name: crates_io_publish
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    name: Crates IO Upload
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v3
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Run cargo publish
+        env:
+          CARGO_REGISTRY_TOKEN :  ${{ secrets.CRATES_IO_TOKEN }}
+        uses: actions-rs/cargo@v1
+        with:
+          command: publish
