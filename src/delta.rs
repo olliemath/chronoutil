@@ -121,7 +121,7 @@ pub fn with_year<D: Datelike>(date: D, year: i32) -> D {
 mod tests {
     use std::collections::HashSet;
 
-    use chrono::naive::{NaiveDate, NaiveDateTime, NaiveTime};
+    use chrono::{naive::{NaiveDate, NaiveDateTime, NaiveTime}, TimeZone, LocalResult};
 
     use super::*;
 
@@ -325,6 +325,52 @@ mod tests {
         assert_eq!(shift_months(base, 0).time(), o_clock);
         assert_eq!(shift_months(base, 1).time(), o_clock);
         assert_eq!(shift_months(base, 2).time(), o_clock);
+    }
+
+    #[test]
+    fn test_shift_months_datetime_tz() {
+        let tz = &chrono_tz::Australia::Melbourne;
+
+        let base = tz.with_ymd_and_hms(2020, 1, 31, 1, 2, 3).single().unwrap();
+
+        assert_eq!(
+            shift_months(base, 0),
+            tz.with_ymd_and_hms(2020, 1, 31, 1, 2, 3).single().unwrap()
+        );
+        assert_eq!(
+            shift_months(base, 1),
+            tz.with_ymd_and_hms(2020, 2, 29, 1, 2, 3).single().unwrap()
+        );
+        assert_eq!(
+            shift_months(base, 2),
+            tz.with_ymd_and_hms(2020, 3, 31, 1, 2, 3).single().unwrap()
+        );
+    }
+
+    #[test] 
+    #[should_panic]
+    fn test_shift_months_datetime_to_dst_backward_transition() {
+        let dst_tz = &chrono_tz::Australia::Melbourne;
+        
+        // On Apr 5th 2020 after 02:59:59, clocks were wound back to 02:00:00 making 02:00::00 to
+        // 02:59:59 ambiguous.
+        // <https://www.timeanddate.com/time/change/australia/melbourne?year=2020>
+        if let LocalResult::Single(base) = dst_tz.with_ymd_and_hms(2020, 3, 5, 2, 00, 0) {
+            shift_months(base, 1); // panics
+        }
+    }
+    
+    #[test] 
+    #[should_panic]
+    fn test_shift_months_datetime_to_dst_forward_transition() {
+        let dst_tz = &chrono_tz::Australia::Melbourne;
+
+        // On Oct 4th 2020 after 01:59:59, clocks were advanced to 03:00:00 making 02:00:00 to 
+        // 02:59:59 non-existent.
+        // <https://www.timeanddate.com/time/change/australia/melbourne?year=2020>        
+        if let LocalResult::Single(base) = dst_tz.with_ymd_and_hms(2020, 9, 4, 2, 00, 0) {
+            shift_months(base, 1); // panics
+        }
     }
 
     #[test]
