@@ -29,6 +29,10 @@ pub fn shift_months<D: Datelike>(date: D, months: i32) -> D {
     shift_months_opt(date, months).unwrap()
 }
 
+/// Same as [`shift_months`] except fallible on unresolvable dates/times.
+///
+/// Returns `None` rather than panicking when shift results in an ambiguous or non-existing 
+/// date/time (e.g. in a DST transition).
 pub fn shift_months_opt<D: Datelike>(date: D, months: i32) -> Option<D> {
     let mut year = date.year() + (date.month() as i32 + months) / 12;
     let mut month = (date.month() as i32 + months) % 12;
@@ -60,6 +64,10 @@ pub fn shift_years<D: Datelike>(date: D, years: i32) -> D {
     shift_years_opt(date, years).unwrap()
 }
 
+/// Same as [`shift_years`] except fallible on unresolvable dates/times.
+///
+/// Returns `None` rather than panicking when shift results in an ambiguous or non-existing 
+/// date/time (e.g. in a DST transition).
 pub fn shift_years_opt<D: Datelike>(date: D, years: i32) -> Option<D> {
     shift_months_opt(date, years * 12)
 }
@@ -103,6 +111,11 @@ pub fn with_month<D: Datelike>(date: D, month: u32) -> Option<D> {
     }
 }
 
+/// Similar to [`with_month`] except _also_ fallible on unresolvable dates/times.
+///
+/// In addition to returning `None` when the month arg is out of range, also returns `None` rather 
+/// than panicking when shift results in an ambiguous or non-existing date/time (e.g. in a DST 
+/// transition).
 pub fn with_month_opt<D: Datelike>(date: D, month: u32) -> Option<D> {
     if month == 0 || month > 12 {
         None
@@ -126,6 +139,10 @@ pub fn with_year<D: Datelike>(date: D, year: i32) -> D {
     with_year_opt(date, year).unwrap()
 }
 
+/// Same as [`with_year`] except fallible on unresolvable dates/times.
+///
+/// Returns `None` rather than panicking when shift results in an ambiguous or non-existing 
+/// date/time (e.g. in a DST transition).
 pub fn with_year_opt<D: Datelike>(date: D, year: i32) -> Option<D> {
     let delta = year - date.year();
     shift_years_opt(date, delta)
