@@ -387,6 +387,14 @@ mod tests {
         }
     }
     
+    #[test]
+    fn test_shift_months_opt_datetime_to_dst_backward_transition() {
+        let dst_tz = &chrono_tz::Australia::Melbourne;
+
+        let base = dst_tz.with_ymd_and_hms(2020, 3, 5, 2, 00, 0).single().unwrap();
+        assert_eq!(None, shift_months_opt(base, 1))
+    }
+    
     #[test] 
     #[should_panic]
     fn test_shift_months_datetime_to_dst_forward_transition() {
@@ -398,6 +406,15 @@ mod tests {
         if let LocalResult::Single(base) = dst_tz.with_ymd_and_hms(2020, 9, 4, 2, 00, 0) {
             shift_months(base, 1); // panics
         }
+    }
+
+
+    #[test]
+    fn test_shift_months_opt_datetime_to_dst_forward_transition() {
+        let dst_tz = &chrono_tz::Australia::Melbourne;
+        
+        let base = dst_tz.with_ymd_and_hms(2020, 9, 4, 2, 00, 0).single().unwrap();
+        assert_eq!(None, shift_months_opt(base, 1))
     }
 
     #[test]
