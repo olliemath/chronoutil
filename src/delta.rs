@@ -31,7 +31,7 @@ pub fn shift_months<D: Datelike>(date: D, months: i32) -> D {
 
 /// Same as [`shift_months`] except fallible on unresolvable dates/times.
 ///
-/// Returns `None` rather than panicking when shift results in an ambiguous or non-existing 
+/// Returns `None` rather than panicking when shift results in an ambiguous or non-existing
 /// date/time (e.g. in a DST transition).
 pub fn shift_months_opt<D: Datelike>(date: D, months: i32) -> Option<D> {
     let mut year = date.year() + (date.month() as i32 + months) / 12;
@@ -66,7 +66,7 @@ pub fn shift_years<D: Datelike>(date: D, years: i32) -> D {
 
 /// Same as [`shift_years`] except fallible on unresolvable dates/times.
 ///
-/// Returns `None` rather than panicking when shift results in an ambiguous or non-existing 
+/// Returns `None` rather than panicking when shift results in an ambiguous or non-existing
 /// date/time (e.g. in a DST transition).
 pub fn shift_years_opt<D: Datelike>(date: D, years: i32) -> Option<D> {
     shift_months_opt(date, years * 12)
@@ -113,8 +113,8 @@ pub fn with_month<D: Datelike>(date: D, month: u32) -> Option<D> {
 
 /// Similar to [`with_month`] except _also_ fallible on unresolvable dates/times.
 ///
-/// In addition to returning `None` when the month arg is out of range, also returns `None` rather 
-/// than panicking when shift results in an ambiguous or non-existing date/time (e.g. in a DST 
+/// In addition to returning `None` when the month arg is out of range, also returns `None` rather
+/// than panicking when shift results in an ambiguous or non-existing date/time (e.g. in a DST
 /// transition).
 pub fn with_month_opt<D: Datelike>(date: D, month: u32) -> Option<D> {
     if month == 0 || month > 12 {
@@ -141,7 +141,7 @@ pub fn with_year<D: Datelike>(date: D, year: i32) -> D {
 
 /// Same as [`with_year`] except fallible on unresolvable dates/times.
 ///
-/// Returns `None` rather than panicking when shift results in an ambiguous or non-existing 
+/// Returns `None` rather than panicking when shift results in an ambiguous or non-existing
 /// date/time (e.g. in a DST transition).
 pub fn with_year_opt<D: Datelike>(date: D, year: i32) -> Option<D> {
     let delta = year - date.year();
@@ -152,7 +152,10 @@ pub fn with_year_opt<D: Datelike>(date: D, year: i32) -> Option<D> {
 mod tests {
     use std::collections::HashSet;
 
-    use chrono::{naive::{NaiveDate, NaiveDateTime, NaiveTime}, TimeZone, LocalResult};
+    use chrono::{
+        naive::{NaiveDate, NaiveDateTime, NaiveTime},
+        LocalResult, TimeZone,
+    };
 
     use super::*;
 
@@ -391,11 +394,11 @@ mod tests {
         );
     }
 
-    #[test] 
+    #[test]
     #[should_panic]
     fn test_shift_months_datetime_to_dst_backward_transition() {
         let dst_tz = &chrono_tz::Australia::Melbourne;
-        
+
         // On Apr 5th 2020 after 02:59:59, clocks were wound back to 02:00:00 making 02:00::00 to
         // 02:59:59 ambiguous.
         // <https://www.timeanddate.com/time/change/australia/melbourne?year=2020>
@@ -403,34 +406,39 @@ mod tests {
             shift_months(base, 1); // panics
         }
     }
-    
+
     #[test]
     fn test_shift_months_opt_datetime_to_dst_backward_transition() {
         let dst_tz = &chrono_tz::Australia::Melbourne;
 
-        let base = dst_tz.with_ymd_and_hms(2020, 3, 5, 2, 00, 0).single().unwrap();
+        let base = dst_tz
+            .with_ymd_and_hms(2020, 3, 5, 2, 00, 0)
+            .single()
+            .unwrap();
         assert_eq!(None, shift_months_opt(base, 1))
     }
-    
-    #[test] 
+
+    #[test]
     #[should_panic]
     fn test_shift_months_datetime_to_dst_forward_transition() {
         let dst_tz = &chrono_tz::Australia::Melbourne;
 
-        // On Oct 4th 2020 after 01:59:59, clocks were advanced to 03:00:00 making 02:00:00 to 
+        // On Oct 4th 2020 after 01:59:59, clocks were advanced to 03:00:00 making 02:00:00 to
         // 02:59:59 non-existent.
-        // <https://www.timeanddate.com/time/change/australia/melbourne?year=2020>        
+        // <https://www.timeanddate.com/time/change/australia/melbourne?year=2020>
         if let LocalResult::Single(base) = dst_tz.with_ymd_and_hms(2020, 9, 4, 2, 00, 0) {
             shift_months(base, 1); // panics
         }
     }
 
-
     #[test]
     fn test_shift_months_opt_datetime_to_dst_forward_transition() {
         let dst_tz = &chrono_tz::Australia::Melbourne;
-        
-        let base = dst_tz.with_ymd_and_hms(2020, 9, 4, 2, 00, 0).single().unwrap();
+
+        let base = dst_tz
+            .with_ymd_and_hms(2020, 9, 4, 2, 00, 0)
+            .single()
+            .unwrap();
         assert_eq!(None, shift_months_opt(base, 1))
     }
 
@@ -536,10 +544,10 @@ mod tests {
         );
     }
 
-     #[test]
+    #[test]
     fn test_with_month_opt() {
         let tz = &chrono_tz::Australia::Melbourne;
-        
+
         let base = tz.with_ymd_and_hms(2020, 1, 31, 0, 0, 0).single().unwrap();
 
         assert_eq!(with_month(base, 0), None);
@@ -558,13 +566,16 @@ mod tests {
         );
         assert_eq!(with_month(base, 13), None);
 
-         // Backwards shifts work too
+        // Backwards shifts work too
         assert_eq!(
-            with_month(tz.with_ymd_and_hms(2021, 2, 15, 0, 0, 0).single().unwrap(), 1),
+            with_month(
+                tz.with_ymd_and_hms(2021, 2, 15, 0, 0, 0).single().unwrap(),
+                1
+            ),
             Some(tz.with_ymd_and_hms(2021, 1, 15, 0, 0, 0).single().unwrap())
         );
     }
-    
+
     #[test]
     fn test_with_year() {
         let base = NaiveDate::from_ymd_opt(2020, 2, 29).unwrap();
