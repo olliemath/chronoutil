@@ -2,7 +2,7 @@
 use core::ops::{Add, Div, Mul, Neg, Sub};
 use std::time::Duration as StdDuration;
 
-use chrono::{DateTime, Duration, NaiveDate, NaiveDateTime, TimeZone};
+use chrono::{Date, DateTime, Duration, NaiveDate, NaiveDateTime, TimeZone};
 
 use super::delta::shift_months;
 
@@ -275,6 +275,18 @@ impl Add<RelativeDuration> for NaiveDateTime {
     }
 }
 
+impl<Tz> Add<RelativeDuration> for Date<Tz>
+where
+    Tz: TimeZone,
+{
+    type Output = Date<Tz>;
+
+    #[inline]
+    fn add(self, rhs: RelativeDuration) -> Date<Tz> {
+        shift_months(self, rhs.months) + rhs.duration
+    }
+}
+
 impl<Tz> Add<RelativeDuration> for DateTime<Tz>
 where
     Tz: TimeZone,
@@ -301,6 +313,18 @@ impl Sub<RelativeDuration> for NaiveDateTime {
 
     #[inline]
     fn sub(self, rhs: RelativeDuration) -> NaiveDateTime {
+        self + (-rhs)
+    }
+}
+
+impl<Tz> Sub<RelativeDuration> for Date<Tz>
+where
+    Tz: TimeZone,
+{
+    type Output = Date<Tz>;
+
+    #[inline]
+    fn sub(self, rhs: RelativeDuration) -> Date<Tz> {
         self + (-rhs)
     }
 }
@@ -378,63 +402,57 @@ mod tests {
 
     #[test]
     fn test_date_arithmetic() {
-        let base = NaiveDate::from_ymd_opt(2020, 2, 29).unwrap();
+        let base = NaiveDate::from_ymd(2020, 2, 29);
 
         assert_eq!(
             base + RelativeDuration {
                 months: 24,
                 duration: Duration::zero()
             },
-            NaiveDate::from_ymd_opt(2022, 2, 28).unwrap()
+            NaiveDate::from_ymd(2022, 2, 28)
         );
         assert_eq!(
             base + RelativeDuration {
                 months: 48,
                 duration: Duration::zero()
             },
-            NaiveDate::from_ymd_opt(2024, 2, 29).unwrap()
+            NaiveDate::from_ymd(2024, 2, 29)
         );
 
-        let not_leap = NaiveDate::from_ymd_opt(2020, 2, 28).unwrap();
+        let not_leap = NaiveDate::from_ymd(2020, 2, 28);
         let tricky_delta = RelativeDuration {
             months: 24,
             duration: Duration::days(1),
         };
-        assert_eq!(
-            base + tricky_delta,
-            NaiveDate::from_ymd_opt(2022, 3, 1).unwrap()
-        );
+        assert_eq!(base + tricky_delta, NaiveDate::from_ymd(2022, 3, 1));
         assert_eq!(base + tricky_delta, not_leap + tricky_delta);
     }
 
     #[test]
     fn test_date_negative_arithmetic() {
-        let base = NaiveDate::from_ymd_opt(2020, 2, 29).unwrap();
+        let base = NaiveDate::from_ymd(2020, 2, 29);
 
         assert_eq!(
             base - RelativeDuration {
                 months: 24,
                 duration: Duration::zero()
             },
-            NaiveDate::from_ymd_opt(2018, 2, 28).unwrap()
+            NaiveDate::from_ymd(2018, 2, 28)
         );
         assert_eq!(
             base - RelativeDuration {
                 months: 48,
                 duration: Duration::zero()
             },
-            NaiveDate::from_ymd_opt(2016, 2, 29).unwrap()
+            NaiveDate::from_ymd(2016, 2, 29)
         );
 
-        let not_leap = NaiveDate::from_ymd_opt(2020, 2, 28).unwrap();
+        let not_leap = NaiveDate::from_ymd(2020, 2, 28);
         let tricky_delta = RelativeDuration {
             months: 24,
             duration: Duration::days(-1),
         };
-        assert_eq!(
-            base - tricky_delta,
-            NaiveDate::from_ymd_opt(2018, 3, 1).unwrap()
-        );
+        assert_eq!(base - tricky_delta, NaiveDate::from_ymd(2018, 3, 1));
         assert_eq!(base - tricky_delta, not_leap - tricky_delta);
     }
 
