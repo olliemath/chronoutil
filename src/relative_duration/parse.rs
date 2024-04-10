@@ -47,6 +47,15 @@ fn parse_timespec(timespec: &str) -> Result<(i32, i32, i32), String> {
     }
 }
 
+fn format_spec(nums: [i64; 3], chars: [char; 3]) -> String {
+    nums.iter()
+        .zip(chars)
+        .filter(|x| *x.0 != 0)
+        .map(|x| format!("{}{}", x.0, x.1))
+        .reduce(|acc, x| acc + &x)
+        .unwrap_or_else(|| "".to_string())
+}
+
 impl RelativeDuration {
     pub fn from_iso_8601(input: &str) -> Result<RelativeDuration, String> {
         let input = input
@@ -60,6 +69,38 @@ impl RelativeDuration {
 
         Ok(RelativeDuration::months(years * 12 + months)
             .with_duration(dhms_to_duration(days, hours, mins, secs)))
+    }
+
+    pub fn to_iso_8601(&self) -> String {
+        let years = self.months as i64 / 12;
+        let months = self.months as i64 % 12;
+
+        let duration_seconds = self.duration.num_seconds();
+
+        // TODO: address this unwrap
+        let days = duration_seconds / (24 * 60 * 60);
+        let mut remaining_seconds = duration_seconds - (days * 24 * 60 * 60);
+
+        let hours = remaining_seconds / (60 * 60);
+        remaining_seconds -= hours * 60 * 60;
+
+        let minutes = remaining_seconds / 60;
+        remaining_seconds -= minutes * 60;
+
+        let seconds = remaining_seconds;
+
+        let date_spec = format_spec([years, months, days], ['Y', 'M', 'D']);
+        let time_spec = format_spec([hours, minutes, seconds], ['H', 'M', 'S']);
+
+        let mut out = String::with_capacity(date_spec.len() + time_spec.len() + 2);
+        out.push('P');
+        out.push_str(&date_spec);
+        if !time_spec.is_empty() {
+            out.push('T');
+            out.push_str(&time_spec);
+        }
+
+        out
     }
 }
 
@@ -90,5 +131,27 @@ mod tests {
         .for_each(|(input, expected)| {
             assert_eq!(RelativeDuration::from_iso_8601(input).unwrap(), *expected)
         })
+    }
+
+    #[test]
+    fn test_format_duration() {
+        [
+            (
+                RelativeDuration::months(12).with_duration(Duration::seconds(1)),
+                "P1YT1S",
+            ),
+            (
+                RelativeDuration::months(2 * 12 + 2).with_duration(dhms_to_duration(2, 2, 2, 2)),
+                "P2Y2M2DT2H2M2S",
+            ),
+            (
+                RelativeDuration::months(1).with_duration(Duration::zero()),
+                "P1M",
+            ),
+            (RelativeDuration::minutes(10), "PT10M"),
+            (RelativeDuration::months(-1), "P-1M"),
+        ]
+        .iter()
+        .for_each(|(input, expected)| assert_eq!(input.to_iso_8601(), *expected))
     }
 }
