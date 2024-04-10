@@ -57,6 +57,27 @@ fn format_spec(nums: [i64; 3], chars: [char; 3]) -> String {
 }
 
 impl RelativeDuration {
+    /// Parses an [ISO 8601 duration string](https://en.wikipedia.org/wiki/ISO_8601#Durations) into
+    /// a [`RelativeDuration`] value.
+    ///
+    /// This supports only duration strings with integer values (i.e `"P1Y"` but not `"P0.5Y"` or
+    /// `"P0,5Y"`), as fractional values cannot be unambiguously represented as a [`RelativeDuration`]
+    ///
+    /// # Errors
+    ///
+    /// - Invalid duration string input
+    /// - Fractional values in duration string
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use chronoutil::RelativeDuration;
+    ///
+    /// assert_eq!(
+    ///     RelativeDuration::from_iso_8601("P1Y").unwrap(),
+    ///     RelativeDuration::years(1),
+    /// );
+    /// ```
     pub fn from_iso_8601(input: &str) -> Result<RelativeDuration, String> {
         let input = input
             .strip_prefix('P')
@@ -71,6 +92,19 @@ impl RelativeDuration {
             .with_duration(dhms_to_duration(days, hours, mins, secs)))
     }
 
+    /// Formats a [`RelativeDuration`] value into an
+    /// [ISO 8601 duration string](https://en.wikipedia.org/wiki/ISO_8601#Durations).
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use chronoutil::RelativeDuration;
+    ///
+    /// assert_eq!(
+    ///     RelativeDuration::years(1).to_iso_8601(),
+    ///     "P1Y",
+    /// );
+    /// ```
     pub fn to_iso_8601(&self) -> String {
         let years = self.months as i64 / 12;
         let months = self.months as i64 % 12;
