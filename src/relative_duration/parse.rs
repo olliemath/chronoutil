@@ -1,5 +1,6 @@
 use super::RelativeDuration;
 use chrono::Duration;
+use std::fmt::Write;
 
 fn dhmsn_to_duration(
     days: i64,
@@ -112,9 +113,10 @@ fn format_spec(nums: [i64; 3], chars: [char; 3]) -> String {
     nums.iter()
         .zip(chars)
         .filter(|x| *x.0 != 0)
-        .map(|x| format!("{}{}", x.0, x.1))
-        .reduce(|acc, x| acc + &x)
-        .unwrap_or_else(|| "".to_string())
+        .fold(String::new(), |mut out, x| {
+            let _ = write!(out, "{}{}", x.0, x.1);
+            out
+        })
 }
 
 impl RelativeDuration {
