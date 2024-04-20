@@ -1,10 +1,23 @@
 use super::RelativeDuration;
 use chrono::Duration;
 
-fn dhmsn_to_duration(days: i64, hours: i64, minutes: i64, seconds: i64, nanos: i64) -> Duration {
-    // TODO: check for overflows here
-    Duration::seconds(((days * 24 + hours) * 60 + minutes) * 60 + seconds)
-        + Duration::nanoseconds(nanos)
+fn dhmsn_to_duration(
+    days: i64,
+    hours: i64,
+    minutes: i64,
+    seconds: i64,
+    nanos: i64,
+) -> Option<Duration> {
+    Some(
+        Duration::seconds(
+            days.checked_mul(24)?
+                .checked_add(hours)?
+                .checked_mul(60)?
+                .checked_add(minutes)?
+                .checked_mul(60)?
+                .checked_add(seconds)?,
+        ) + Duration::nanoseconds(nanos),
+    )
 }
 
 fn get_terminated<T: std::str::FromStr + From<i32>>(
@@ -70,8 +83,14 @@ fn parse_datespec(datespec: &str) -> Result<(i32, i32, i64), String> {
             remainder, datespec
         ))
     } else {
-        // TODO: check for overflow here
-        Ok((years, months, (weeks * 7) + days))
+        Ok((
+            years,
+            months,
+            weeks
+                .checked_mul(7)
+                .and_then(|x| x.checked_add(days))
+                .ok_or_else(|| "integer overflow on constructing duration".to_string())?,
+        ))
     }
 }
 
@@ -133,9 +152,16 @@ impl RelativeDuration {
         let (years, months, days) = parse_datespec(datespec)?;
         let (hours, mins, secs, nanos) = parse_timespec(timespec)?;
 
-        // TODO: check for overflows here
-        Ok(RelativeDuration::months(years * 12 + months)
-            .with_duration(dhmsn_to_duration(days, hours, mins, secs, nanos)))
+        Ok(RelativeDuration::months(
+            years
+                .checked_mul(12)
+                .and_then(|x| x.checked_add(months))
+                .ok_or_else(|| "integer overflow on constructing duration".to_string())?,
+        )
+        .with_duration(
+            dhmsn_to_duration(days, hours, mins, secs, nanos)
+                .ok_or_else(|| "integer overflow on constructing duration".to_string())?,
+        ))
     }
 
     /// Formats a [`RelativeDuration`] value into an
@@ -157,7 +183,6 @@ impl RelativeDuration {
 
         let duration_seconds = self.duration.num_seconds();
 
-        // TODO: address this unwrap
         let days = duration_seconds / (24 * 60 * 60);
         let mut remaining_seconds = duration_seconds - (days * 24 * 60 * 60);
 
@@ -198,7 +223,7 @@ mod tests {
             (
                 "P2Y2M2DT2H2M2S",
                 RelativeDuration::months(2 * 12 + 2)
-                    .with_duration(dhmsn_to_duration(2, 2, 2, 2, 0)),
+                    .with_duration(dhmsn_to_duration(2, 2, 2, 2, 0).unwrap()),
             ),
             (
                 "P1M",
@@ -225,7 +250,7 @@ mod tests {
             ),
             (
                 RelativeDuration::months(2 * 12 + 2)
-                    .with_duration(dhmsn_to_duration(2, 2, 2, 2, 0)),
+                    .with_duration(dhmsn_to_duration(2, 2, 2, 2, 0).unwrap()),
                 "P2Y2M2DT2H2M2S",
             ),
             (
