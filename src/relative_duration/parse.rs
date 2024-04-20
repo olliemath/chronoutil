@@ -6,17 +6,16 @@ fn dhmsn_to_duration(
     hours: i64,
     minutes: i64,
     seconds: i64,
-    nanos: i64,
+    nanos: u32,
 ) -> Option<Duration> {
-    Some(
-        Duration::seconds(
-            days.checked_mul(24)?
-                .checked_add(hours)?
-                .checked_mul(60)?
-                .checked_add(minutes)?
-                .checked_mul(60)?
-                .checked_add(seconds)?,
-        ) + Duration::nanoseconds(nanos),
+    Duration::new(
+        days.checked_mul(24)?
+            .checked_add(hours)?
+            .checked_mul(60)?
+            .checked_add(minutes)?
+            .checked_mul(60)?
+            .checked_add(seconds)?,
+        nanos,
     )
 }
 
@@ -38,7 +37,7 @@ fn get_terminated<T: std::str::FromStr + From<i32>>(
     }
 }
 
-fn get_terminated_decimal(input: &str, terminator: char) -> Result<(&str, i64, i64), String> {
+fn get_terminated_decimal(input: &str, terminator: char) -> Result<(&str, i64, u32), String> {
     if let Some((decimal_string, remainder)) = input.split_once(terminator) {
         let (int_string, fraction_string) = decimal_string.split_once('.').unwrap_or_else(|| {
             decimal_string
@@ -62,8 +61,8 @@ fn get_terminated_decimal(input: &str, terminator: char) -> Result<(&str, i64, i
                 // truncate to 9 chars, since we only support nanosecond resolution
                 .take(9)
                 .collect::<String>()
-                .parse::<i64>()
-                .map_err(|_| format!("{} is not a valid i64", fraction_string))?
+                .parse::<u32>()
+                .map_err(|_| format!("{} is not a valid u32", fraction_string))?
         };
         Ok((remainder, int, fraction))
     } else {
@@ -94,7 +93,7 @@ fn parse_datespec(datespec: &str) -> Result<(i32, i32, i64), String> {
     }
 }
 
-fn parse_timespec(timespec: &str) -> Result<(i64, i64, i64, i64), String> {
+fn parse_timespec(timespec: &str) -> Result<(i64, i64, i64, u32), String> {
     let (remainder, hours) = get_terminated::<i64>(timespec, 'H')?;
     let (remainder, mins) = get_terminated::<i64>(remainder, 'M')?;
     let (remainder, secs, nanos) = get_terminated_decimal(remainder, 'S')?;
