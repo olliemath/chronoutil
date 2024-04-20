@@ -185,13 +185,13 @@ impl RelativeDuration {
         let duration_seconds = self.duration.num_seconds();
 
         let days = duration_seconds / (24 * 60 * 60);
-        let mut remaining_seconds = duration_seconds - (days * 24 * 60 * 60);
+        let mut remaining_seconds = duration_seconds % (24 * 60 * 60);
 
         let hours = remaining_seconds / (60 * 60);
-        remaining_seconds -= hours * 60 * 60;
+        remaining_seconds %= 60 * 60;
 
         let minutes = remaining_seconds / 60;
-        remaining_seconds -= minutes * 60;
+        remaining_seconds %= 60;
 
         let seconds = remaining_seconds;
 
