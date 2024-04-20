@@ -199,9 +199,21 @@ impl RelativeDuration {
         let mut out = String::with_capacity(date_spec.len() + time_spec.len() + 2);
         out.push('P');
         out.push_str(&date_spec);
-        if !time_spec.is_empty() {
+        if !time_spec.is_empty() || self.duration.subsec_nanos() != 0 {
             out.push('T');
-            out.push_str(&time_spec);
+            if time_spec.is_empty() {
+                out.push('0');
+            } else {
+                out.push_str(&time_spec);
+            }
+        }
+        if self.duration.subsec_nanos() != 0 {
+            out = out.trim_end_matches('S').to_string();
+            let nanos_str_raw = format!("{:0>9}", self.duration.subsec_nanos());
+            let nanos_str_trimmed = nanos_str_raw.trim_end_matches('0');
+            out.push('.');
+            out.push_str(nanos_str_trimmed);
+            out.push('S');
         }
 
         out
@@ -258,6 +270,8 @@ mod tests {
             ),
             (RelativeDuration::minutes(10), "PT10M"),
             (RelativeDuration::months(-1), "P-1M"),
+            (RelativeDuration::nanoseconds(1), "PT0.000000001S"),
+            (RelativeDuration::nanoseconds(100_000_000), "PT0.1S"),
         ]
         .iter()
         .for_each(|(input, expected)| assert_eq!(input.to_iso_8601(), *expected))
