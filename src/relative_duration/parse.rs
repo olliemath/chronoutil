@@ -1,23 +1,31 @@
 use super::RelativeDuration;
 use chrono::Duration;
 
-fn dhmsn_to_duration(days: i32, hours: i32, minutes: i32, seconds: i32, nanos: i32) -> Duration {
-    Duration::seconds((((days * 24 + hours) * 60 + minutes) * 60 + seconds) as i64)
-        + Duration::nanoseconds(nanos.into())
+fn dhmsn_to_duration(days: i64, hours: i64, minutes: i64, seconds: i64, nanos: i64) -> Duration {
+    // TODO: check for overflows here
+    Duration::seconds(((days * 24 + hours) * 60 + minutes) * 60 + seconds)
+        + Duration::nanoseconds(nanos)
 }
 
-fn get_terminated(input: &str, terminator: char) -> Result<(&str, i32), String> {
+fn get_terminated<T: std::str::FromStr + From<i32>>(
+    input: &str,
+    terminator: char,
+) -> Result<(&str, T), String> {
     if let Some((int_string, remainder)) = input.split_once(terminator) {
-        let int = int_string
-            .parse::<i32>()
-            .map_err(|_| format!("{} is not a valid i32", int_string))?;
+        let int = int_string.parse::<T>().map_err(|_| {
+            format!(
+                "{} is not a valid {}",
+                int_string,
+                std::any::type_name::<T>()
+            )
+        })?;
         Ok((remainder, int))
     } else {
-        Ok((input, 0))
+        Ok((input, 0.into()))
     }
 }
 
-fn get_terminated_decimal(input: &str, terminator: char) -> Result<(&str, i32, i32), String> {
+fn get_terminated_decimal(input: &str, terminator: char) -> Result<(&str, i64, i64), String> {
     if let Some((decimal_string, remainder)) = input.split_once(terminator) {
         let (int_string, fraction_string) = decimal_string.split_once('.').unwrap_or_else(|| {
             decimal_string
@@ -28,8 +36,8 @@ fn get_terminated_decimal(input: &str, terminator: char) -> Result<(&str, i32, i
         });
 
         let int = int_string
-            .parse::<i32>()
-            .map_err(|_| format!("{} is not a valid i32", int_string))?;
+            .parse::<i64>()
+            .map_err(|_| format!("{} is not a valid i64", int_string))?;
 
         let fraction = if fraction_string.is_empty() {
             0
@@ -41,8 +49,8 @@ fn get_terminated_decimal(input: &str, terminator: char) -> Result<(&str, i32, i
                 // truncate to 9 chars, since we only support nanosecond resolution
                 .take(9)
                 .collect::<String>()
-                .parse::<i32>()
-                .map_err(|_| format!("{} is not a valid i32", fraction_string))?
+                .parse::<i64>()
+                .map_err(|_| format!("{} is not a valid i64", fraction_string))?
         };
         Ok((remainder, int, fraction))
     } else {
@@ -50,11 +58,11 @@ fn get_terminated_decimal(input: &str, terminator: char) -> Result<(&str, i32, i
     }
 }
 
-fn parse_datespec(datespec: &str) -> Result<(i32, i32, i32), String> {
-    let (remainder, years) = get_terminated(datespec, 'Y')?;
-    let (remainder, months) = get_terminated(remainder, 'M')?;
-    let (remainder, weeks) = get_terminated(remainder, 'W')?;
-    let (remainder, days) = get_terminated(remainder, 'D')?;
+fn parse_datespec(datespec: &str) -> Result<(i32, i32, i64), String> {
+    let (remainder, years) = get_terminated::<i32>(datespec, 'Y')?;
+    let (remainder, months) = get_terminated::<i32>(remainder, 'M')?;
+    let (remainder, weeks) = get_terminated::<i64>(remainder, 'W')?;
+    let (remainder, days) = get_terminated::<i64>(remainder, 'D')?;
 
     if !remainder.is_empty() {
         Err(format!(
@@ -62,13 +70,14 @@ fn parse_datespec(datespec: &str) -> Result<(i32, i32, i32), String> {
             remainder, datespec
         ))
     } else {
+        // TODO: check for overflow here
         Ok((years, months, (weeks * 7) + days))
     }
 }
 
-fn parse_timespec(timespec: &str) -> Result<(i32, i32, i32, i32), String> {
-    let (remainder, hours) = get_terminated(timespec, 'H')?;
-    let (remainder, mins) = get_terminated(remainder, 'M')?;
+fn parse_timespec(timespec: &str) -> Result<(i64, i64, i64, i64), String> {
+    let (remainder, hours) = get_terminated::<i64>(timespec, 'H')?;
+    let (remainder, mins) = get_terminated::<i64>(remainder, 'M')?;
     let (remainder, secs, nanos) = get_terminated_decimal(remainder, 'S')?;
 
     if !remainder.is_empty() {
@@ -124,6 +133,7 @@ impl RelativeDuration {
         let (years, months, days) = parse_datespec(datespec)?;
         let (hours, mins, secs, nanos) = parse_timespec(timespec)?;
 
+        // TODO: check for overflows here
         Ok(RelativeDuration::months(years * 12 + months)
             .with_duration(dhmsn_to_duration(days, hours, mins, secs, nanos)))
     }
