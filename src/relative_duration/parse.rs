@@ -262,6 +262,8 @@ impl RelativeDuration {
 
 #[cfg(test)]
 mod tests {
+    use proptest::prelude::*;
+
     use super::*;
 
     #[test]
@@ -332,5 +334,29 @@ mod tests {
         ]
         .iter()
         .for_each(|(input, expected)| assert_eq!(input.to_iso_8601(), *expected))
+    }
+
+    proptest! {
+        #[test]
+        fn proptest_format_and_back(
+            months in prop::num::i32::ANY,
+            secs in (i64::MIN/1000)..(i64::MAX/1000),
+            nanos in 0u32..1_000_000_000
+        ) {
+            let d = RelativeDuration::months(months).with_duration(Duration::new(secs, nanos).unwrap());
+            prop_assert_eq!(d, RelativeDuration::from_iso_8601(&(d.to_iso_8601())).unwrap());
+        }
+
+        #[test]
+        fn proptest_parse_and_back(
+            s in r"P(?:[1-9][0-9]{0,7}Y)?(?:(?:[1-9]|1[0-1])M)?(?:(?:[1-9]|[1-2][0-9])D)?(?:T(?:(?:[1-9]|1[0-9]|2[0-3])H)(?:(?:[1-9]|[1-5][0-9])M)(?:(?:(?:[1-9]|[1-5][0-9])|(?:(?:[0-9]|[1-5][0-9])\.[0-9]{0,8}[1-9]))S))?",
+        ) {
+            prop_assert_eq!(s.clone(), RelativeDuration::from_iso_8601(&s).unwrap().to_iso_8601());
+        }
+
+        #[test]
+        fn proptest_parse_doesnt_panic(s in r"//PC*") {
+            let _ = RelativeDuration::from_iso_8601(&s);
+        }
     }
 }
