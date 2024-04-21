@@ -1,6 +1,6 @@
 use super::RelativeDuration;
 use chrono::Duration;
-use std::fmt::Write;
+use std::{convert::TryInto, fmt::Write};
 
 fn dhmsn_to_duration(
     days: i64,
@@ -65,7 +65,17 @@ fn get_terminated_decimal(input: &str, terminator: char) -> Result<(&str, i64, u
                 .parse::<u32>()
                 .map_err(|_| format!("{} is not a valid u32", fraction_string))?
         };
-        Ok((remainder, int, fraction))
+
+        // special handling for case of nonzero nanoseconds on a negative duration
+        if decimal_string.starts_with('-') && fraction != 0 {
+            Ok((
+                remainder,
+                int - 1,
+                (-(fraction as i32) + 1_000_000_000).try_into().unwrap(),
+            ))
+        } else {
+            Ok((remainder, int, fraction))
+        }
     } else {
         Ok((input, 0, 0))
     }
@@ -107,16 +117,6 @@ fn parse_timespec(timespec: &str) -> Result<(i64, i64, i64, u32), String> {
     } else {
         Ok((hours, mins, secs, nanos))
     }
-}
-
-fn format_spec(nums: [i64; 3], chars: [char; 3]) -> String {
-    nums.iter()
-        .zip(chars)
-        .filter(|x| *x.0 != 0)
-        .fold(String::new(), |mut out, x| {
-            let _ = write!(out, "{}{}", x.0, x.1);
-            out
-        })
 }
 
 impl RelativeDuration {
@@ -193,28 +193,66 @@ impl RelativeDuration {
         let minutes = remaining_seconds / 60;
         remaining_seconds %= 60;
 
-        let seconds = remaining_seconds;
+        let subsec_nanos = self.duration.subsec_nanos();
 
-        let date_spec = format_spec([years, months, days], ['Y', 'M', 'D']);
-        let time_spec = format_spec([hours, minutes, seconds], ['H', 'M', 'S']);
+        // This awkward handling is needed to represent nanoseconds as a fraction of seconds,
+        // instead of independently, since it must have no sign, and will affect the sign for
+        // seconds. This would be simpler if we could get the Duration.secs and Duration.nanos
+        // directly, but unfortunately chrono only offers Duration::num_seconds and
+        // Duration::subsec_nanos, both of which apply transformations before returning...
+        let (seconds, nanos, push_minus) = if remaining_seconds > 0 && subsec_nanos < 0 {
+            (remaining_seconds - 1, subsec_nanos + 1_000_000_000, false)
+        } else if remaining_seconds < 0 && subsec_nanos > 0 {
+            (remaining_seconds + 1, -subsec_nanos + 1_000_000_000, false)
+        } else if remaining_seconds <= 0 && subsec_nanos < 0 {
+            (remaining_seconds, -subsec_nanos, remaining_seconds == 0)
+        } else {
+            (remaining_seconds, subsec_nanos, false)
+        };
 
-        let mut out = String::with_capacity(date_spec.len() + time_spec.len() + 2);
+        let mut out = String::new();
+
         out.push('P');
-        out.push_str(&date_spec);
-        if !time_spec.is_empty() || self.duration.subsec_nanos() != 0 {
+
+        [years, months, days]
+            .iter()
+            .zip(['Y', 'M', 'D'])
+            .filter(|x| *x.0 != 0)
+            .fold(&mut out, |out, x| {
+                let _ = write!(out, "{}{}", x.0, x.1);
+                out
+            });
+
+        if [hours, minutes, seconds, nanos as i64]
+            .iter()
+            .any(|x| *x != 0)
+        {
             out.push('T');
-            if time_spec.is_empty() {
-                out.push('0');
-            } else {
-                out.push_str(&time_spec);
-            }
         }
-        if self.duration.subsec_nanos() != 0 {
-            out = out.trim_end_matches('S').to_string();
-            let nanos_str_raw = format!("{:0>9}", self.duration.subsec_nanos());
-            let nanos_str_trimmed = nanos_str_raw.trim_end_matches('0');
-            out.push('.');
-            out.push_str(nanos_str_trimmed);
+
+        [hours, minutes]
+            .iter()
+            .zip(['H', 'M'])
+            .filter(|x| *x.0 != 0)
+            .fold(&mut out, |out, x| {
+                let _ = write!(out, "{}{}", x.0, x.1);
+                out
+            });
+
+        if push_minus {
+            out.push('-');
+        }
+
+        if seconds != 0 || nanos != 0 {
+            let _ = write!(out, "{}", seconds);
+
+            if nanos != 0 {
+                let nanos_str_raw = format!("{:0>9}", nanos);
+                let nanos_str_trimmed = nanos_str_raw.trim_end_matches('0');
+                out.push('.');
+                out.push_str(nanos_str_trimmed);
+            }
+
             out.push('S');
         }
 
@@ -253,6 +291,11 @@ mod tests {
             ("P-23M", RelativeDuration::months(-23)),
             ("PT0.0000000010S", RelativeDuration::nanoseconds(1)),
             ("PT0.1S", RelativeDuration::nanoseconds(100_000_000)),
+            (
+                "PT-0.999999999S",
+                RelativeDuration::years(0)
+                    .with_duration(dhmsn_to_duration(0, 0, 0, -1, 1).unwrap()),
+            ),
         ]
         .iter()
         .for_each(|(input, expected)| {
@@ -281,6 +324,11 @@ mod tests {
             (RelativeDuration::months(-23), "P-1Y-11M"),
             (RelativeDuration::nanoseconds(1), "PT0.000000001S"),
             (RelativeDuration::nanoseconds(100_000_000), "PT0.1S"),
+            (
+                RelativeDuration::years(0)
+                    .with_duration(dhmsn_to_duration(0, 0, 0, -1, 1).unwrap()),
+                "PT-0.999999999S",
+            ),
         ]
         .iter()
         .for_each(|(input, expected)| assert_eq!(input.to_iso_8601(), *expected))
