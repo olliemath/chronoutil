@@ -245,6 +245,12 @@ mod tests {
             ("PT10M", RelativeDuration::minutes(10)),
             ("P-1M", RelativeDuration::months(-1)),
             ("P1W1D", RelativeDuration::days(8)),
+            (
+                "P1Y-10M-1W3DT3H-6M-1S",
+                RelativeDuration::months(2)
+                    .with_duration(dhmsn_to_duration(-4, 3, -6, -1, 0).unwrap()),
+            ),
+            ("P-23M", RelativeDuration::months(-23)),
             ("PT0.0000000010S", RelativeDuration::nanoseconds(1)),
             ("PT0.1S", RelativeDuration::nanoseconds(100_000_000)),
         ]
@@ -272,6 +278,7 @@ mod tests {
             ),
             (RelativeDuration::minutes(10), "PT10M"),
             (RelativeDuration::months(-1), "P-1M"),
+            (RelativeDuration::months(-23), "P-1Y-11M"),
             (RelativeDuration::nanoseconds(1), "PT0.000000001S"),
             (RelativeDuration::nanoseconds(100_000_000), "PT0.1S"),
         ]
