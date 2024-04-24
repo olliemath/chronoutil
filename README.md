@@ -43,8 +43,8 @@ component.
 let one_day = RelativeDuration::days(1);
 let one_month = RelativeDuration::months(1);
 let delta = one_month + one_day;
-let start = NaiveDate::from_ymd(2020, 1, 1);
-assert_eq!(start + delta, NaiveDate::from_ymd(2020, 2, 2));
+let start = NaiveDate::from_ymd_opt(2020, 1, 1).unwrap();
+assert_eq!(start + delta, NaiveDate::from_ymd_opt(2020, 2, 2).unwrap());
 ```
 
 The behaviour of `RelativeDuration` is consistent and well-defined in edge-cases
@@ -54,8 +54,8 @@ The behaviour of `RelativeDuration` is consistent and well-defined in edge-cases
 let one_day = RelativeDuration::days(1);
 let one_month = RelativeDuration::months(1);
 let delta = one_month + one_day;
-let start = NaiveDate::from_ymd(2020, 1, 30);
-assert_eq!(start + delta, NaiveDate::from_ymd(2020, 3, 1));
+let start = NaiveDate::from_ymd_opt(2020, 1, 30).unwrap();
+assert_eq!(start + delta, NaiveDate::from_ymd_opt(2020, 3, 1).unwrap());
 ```
 
 ### DateRule
@@ -67,7 +67,7 @@ For example, the following will yield one `NaiveDate` on the last day of each
 month in 2025:
 
 ```rust
-let start = NaiveDate::from_ymd(2025, 1, 31);
+let start = NaiveDate::from_ymd_opt(2025, 1, 31).unwrap();
 let rule = DateRule::monthly(start).with_count(12);
 // 2025-1-31, 2025-2-28, 2025-3-31, 2025-4-30, ...
 ```
@@ -114,25 +114,25 @@ This leads us to an interesting point about the `RelativeDuration`: addition is 
 _[associative](https://en.wikipedia.org/wiki/Associative_property)_:
 
 ```rust
-let start = NaiveDate::from_ymd(2020, 1, 31);
+let start = NaiveDate::from_ymd_opt(2020, 1, 31).unwrap();
 let delta = RelativeDuration::months(1);
 
 let d1 = (start + delta) + delta;
 let d2 = start + (delta + delta);
 
-assert_eq!(d1, NaiveDate::from_ymd(2020, 3, 29));
-assert_eq!(d2, NaiveDate::from_ymd(2020, 3, 31));
+assert_eq!(d1, NaiveDate::from_ymd_opt(2020, 3, 29).unwrap());
+assert_eq!(d2, NaiveDate::from_ymd_opt(2020, 3, 31).unwrap());
 ```
 
 If you want a series of shifted dates, we advise using the `DateRule`, which takes
 account of some of these subtleties:
 ```rust
-let start = NaiveDate::from_ymd(2020, 1, 31);
+let start = NaiveDate::from_ymd_opt(2020, 1, 31).unwrap();
 let delta = RelativeDuration::months(1);
 let mut rule = DateRule::new(start, delta);
-assert_eq!(rule.next().unwrap(), NaiveDate::from_ymd(2020, 1, 31));
-assert_eq!(rule.next().unwrap(), NaiveDate::from_ymd(2020, 2, 29));
-assert_eq!(rule.next().unwrap(), NaiveDate::from_ymd(2020, 3, 31));
+assert_eq!(rule.next().unwrap(), NaiveDate::from_ymd_opt(2020, 1, 31).unwrap());
+assert_eq!(rule.next().unwrap(), NaiveDate::from_ymd_opt(2020, 2, 29).unwrap());
+assert_eq!(rule.next().unwrap(), NaiveDate::from_ymd_opt(2020, 3, 31).unwrap());
 ```
 
 ## Using custom Datelike types
