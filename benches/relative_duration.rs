@@ -9,19 +9,19 @@ fn relative_duration_format_benchmark(c: &mut Criterion) {
         "P99999999Y11M30DT23H59M59.999999999S",
     ]
     .iter()
-    .map(|s| RelativeDuration::from_iso_8601(s).unwrap())
+    .map(|s| RelativeDuration::parse_from_iso8601(s).unwrap())
     .collect::<Vec<RelativeDuration>>();
 
     let mut g = c.benchmark_group("relative_duration_format");
 
     g.bench_function("one_specifier", |b| {
-        b.iter(|| black_box(durations[0]).to_iso_8601())
+        b.iter(|| black_box(durations[0]).format_to_iso8601())
     });
     g.bench_function("all_specifiers", |b| {
-        b.iter(|| black_box(durations[1]).to_iso_8601())
+        b.iter(|| black_box(durations[1]).format_to_iso8601())
     });
     g.bench_function("long_specifiers", |b| {
-        b.iter(|| black_box(durations[2]).to_iso_8601())
+        b.iter(|| black_box(durations[2]).format_to_iso8601())
     });
 }
 
@@ -35,13 +35,13 @@ fn relative_duration_parse_benchmark(c: &mut Criterion) {
     let mut g = c.benchmark_group("relative_duration_parse");
 
     g.bench_function("one_specifier", |b| {
-        b.iter(|| RelativeDuration::from_iso_8601(black_box(durations[0])))
+        b.iter(|| RelativeDuration::parse_from_iso8601(black_box(durations[0])))
     });
     g.bench_function("all_specifiers", |b| {
-        b.iter(|| RelativeDuration::from_iso_8601(black_box(durations[1])))
+        b.iter(|| RelativeDuration::parse_from_iso8601(black_box(durations[1])))
     });
     g.bench_function("long_specifiers", |b| {
-        b.iter(|| RelativeDuration::from_iso_8601(black_box(durations[2])))
+        b.iter(|| RelativeDuration::parse_from_iso8601(black_box(durations[2])))
     });
 }
 

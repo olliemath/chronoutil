@@ -139,11 +139,11 @@ impl RelativeDuration {
     /// use chronoutil::RelativeDuration;
     ///
     /// assert_eq!(
-    ///     RelativeDuration::from_iso_8601("P1Y").unwrap(),
+    ///     RelativeDuration::parse_from_iso8601("P1Y").unwrap(),
     ///     RelativeDuration::years(1),
     /// );
     /// ```
-    pub fn from_iso_8601(input: &str) -> Result<RelativeDuration, String> {
+    pub fn parse_from_iso8601(input: &str) -> Result<RelativeDuration, String> {
         let input = input
             .strip_prefix('P')
             .ok_or_else(|| "duration was not prefixed with P".to_string())?;
@@ -174,11 +174,11 @@ impl RelativeDuration {
     /// use chronoutil::RelativeDuration;
     ///
     /// assert_eq!(
-    ///     RelativeDuration::years(1).to_iso_8601(),
+    ///     RelativeDuration::years(1).format_to_iso8601(),
     ///     "P1Y",
     /// );
     /// ```
-    pub fn to_iso_8601(&self) -> String {
+    pub fn format_to_iso8601(&self) -> String {
         let years = self.months as i64 / 12;
         let months = self.months as i64 % 12;
 
@@ -301,7 +301,10 @@ mod tests {
         ]
         .iter()
         .for_each(|(input, expected)| {
-            assert_eq!(RelativeDuration::from_iso_8601(input).unwrap(), *expected)
+            assert_eq!(
+                RelativeDuration::parse_from_iso8601(input).unwrap(),
+                *expected
+            )
         })
     }
 
@@ -333,7 +336,7 @@ mod tests {
             ),
         ]
         .iter()
-        .for_each(|(input, expected)| assert_eq!(input.to_iso_8601(), *expected))
+        .for_each(|(input, expected)| assert_eq!(input.format_to_iso8601(), *expected))
     }
 
     proptest! {
@@ -344,19 +347,19 @@ mod tests {
             nanos in 0u32..1_000_000_000
         ) {
             let d = RelativeDuration::months(months).with_duration(Duration::new(secs, nanos).unwrap());
-            prop_assert_eq!(d, RelativeDuration::from_iso_8601(&(d.to_iso_8601())).unwrap());
+            prop_assert_eq!(d, RelativeDuration::parse_from_iso8601(&(d.format_to_iso8601())).unwrap());
         }
 
         #[test]
         fn proptest_parse_and_back(
             s in r"P(?:[1-9][0-9]{0,7}Y)?(?:(?:[1-9]|1[0-1])M)?(?:(?:[1-9]|[1-2][0-9])D)?(?:T(?:(?:[1-9]|1[0-9]|2[0-3])H)(?:(?:[1-9]|[1-5][0-9])M)(?:(?:(?:[1-9]|[1-5][0-9])|(?:(?:[0-9]|[1-5][0-9])\.[0-9]{0,8}[1-9]))S))?",
         ) {
-            prop_assert_eq!(s.clone(), RelativeDuration::from_iso_8601(&s).unwrap().to_iso_8601());
+            prop_assert_eq!(s.clone(), RelativeDuration::parse_from_iso8601(&s).unwrap().format_to_iso8601());
         }
 
         #[test]
         fn proptest_parse_doesnt_panic(s in r"//PC*") {
-            let _ = RelativeDuration::from_iso_8601(&s);
+            let _ = RelativeDuration::parse_from_iso8601(&s);
         }
     }
 }
