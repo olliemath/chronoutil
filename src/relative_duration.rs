@@ -6,6 +6,8 @@ use chrono::{Date, DateTime, Duration, NaiveDate, NaiveDateTime, TimeZone};
 
 use super::delta::shift_months;
 
+mod parse;
+
 /// Relative time duration extending Chrono's Duration.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 pub struct RelativeDuration {

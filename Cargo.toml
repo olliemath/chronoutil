@@ -17,7 +17,12 @@ version = "0.2.6"
 [dev-dependencies]
 criterion = "0.3"
 chrono-tz = "0.8.3"
+proptest = "1.4.0"
 
 [[bench]]
 name = "delta"
+harness = false
+
+[[bench]]
+name = "relative_duration"
 harness = false
