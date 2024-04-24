@@ -74,7 +74,6 @@ assert_eq!(
     + RelativeDuration::nanoseconds(400_000_000)
 )
 assert_eq!(parsed.format_to_iso8601().unwrap(), payload)
-
 ```
 
 Specifically, we require that all fields except the seconds be integers.
