@@ -98,7 +98,7 @@ ChronoUtil also exposes useful shift functions which are used internally, namely
 
 - [**`shift_months`**](https://docs.rs/chronoutil/0.2.7/chronoutil/delta/fn.shift_months.html) to shift a datelike value by a given number of months
 - [**`shift_years`**](https://docs.rs/chronoutil/0.2.7/chronoutil/delta/fn.shift_years.html) to shift a datelike value by a given number of years
-- [**`with_year`**](https://docs.rs/chronoutil/0.2.7/chronoutil/delta/fn.shift_months.html) to shift a datelike value to a given day
+- [**`with_day`**](https://docs.rs/chronoutil/0.2.7/chronoutil/delta/fn.with_day.html) to shift a datelike value to a given day
 - [**`with_month`**](https://docs.rs/chronoutil/0.2.7/chronoutil/delta/fn.with_month.html) to shift a datelike value to a given month
 - [**`with_year`**](https://docs.rs/chronoutil/0.2.7/chronoutil/delta/fn.with_year.html) to shift a datelike value to a given year
 
