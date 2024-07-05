@@ -73,6 +73,18 @@ where
         Self::new(from, RelativeDuration::months(1))
     }
 
+    /// Creates a `DateRule` yielding dates one quarter (three months) apart.
+    #[inline]
+    pub fn quarterly(from: D) -> Self {
+        Self::new(from, RelativeDuration::months(3))
+    }
+
+    /// Creates a `DateRule` yielding dates six months (semi-annually) apart.
+    #[inline]
+    pub fn semiannually(from: D) -> Self {
+        Self::new(from, RelativeDuration::months(6))
+    }
+
     /// Creates a `DateRule` yielding dates one year appart.
     /// Ambiguous month-ends are shifted backwards as necessary.
     #[inline]
@@ -342,7 +354,7 @@ mod tests {
             "DateRule should finish before the final day"
         );
 
-        // Months, years
+        // Months
         let interesting = NaiveDate::from_ymd_opt(2020, 1, 30).unwrap(); // The day will change each month
 
         let months: Vec<NaiveDate> = DateRule::monthly(interesting).with_count(5).collect();
@@ -366,6 +378,35 @@ mod tests {
             "DateRule should finish before the count is up"
         );
 
+        // Quarters (three months)
+        let some_start = NaiveDate::from_ymd_opt(2020, 1, 31).unwrap();
+        let dates: Vec<NaiveDate> = DateRule::quarterly(some_start).with_count(4).collect();
+        assert_eq!(
+            dates[0],
+            NaiveDate::from_ymd_opt(2020, 1, 31).unwrap(),
+            "DateRule should start at the initial day"
+        );
+        assert_eq!(
+            dates[1],
+            NaiveDate::from_ymd_opt(2020, 4, 30).unwrap(),
+            "DateRule should increment by three months"
+        );
+
+        // Six months (semi-annually)
+        let some_start = NaiveDate::from_ymd_opt(2020, 1, 31).unwrap();
+        let dates: Vec<NaiveDate> = DateRule::semiannually(some_start).with_count(4).collect();
+        assert_eq!(
+            dates[0],
+            NaiveDate::from_ymd_opt(2020, 1, 31).unwrap(),
+            "DateRule should start at the initial day"
+        );
+        assert_eq!(
+            dates[1],
+            NaiveDate::from_ymd_opt(2020, 7, 31).unwrap(),
+            "DateRule should increment by six months"
+        );
+
+        // Years
         let years: Vec<NaiveDate> = DateRule::yearly(interesting).with_count(3).collect();
         assert_eq!(
             years[0], interesting,
